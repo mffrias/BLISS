@@ -1,0 +1,1171 @@
+package gov.nasa.jpf.symbc.bytecode.bounded;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+
+
+import aima.core.environment.map.Map;
+import gov.nasa.jpf.vm.BooleanFieldInfo;
+import gov.nasa.jpf.vm.ClassInfo;
+import gov.nasa.jpf.vm.DoubleFieldInfo;
+import gov.nasa.jpf.vm.ElementInfo;
+import gov.nasa.jpf.vm.FieldInfo;
+import gov.nasa.jpf.vm.FloatFieldInfo;
+import gov.nasa.jpf.vm.IntegerFieldInfo;
+import gov.nasa.jpf.vm.KernelState;
+import gov.nasa.jpf.vm.LongFieldInfo;
+import gov.nasa.jpf.vm.MJIEnv;
+import gov.nasa.jpf.vm.ReferenceFieldInfo;
+import gov.nasa.jpf.vm.StaticElementInfo;
+import gov.nasa.jpf.vm.ThreadInfo;
+import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
+import gov.nasa.jpf.symbc.SymbolicInstructionFactoryBounded;
+import gov.nasa.jpf.symbc.heap.HeapNode;
+import gov.nasa.jpf.symbc.heap.Helper;
+import gov.nasa.jpf.symbc.heap.SymbolicInputHeap;
+import gov.nasa.jpf.symbc.heap.bounded.BoundsMap;
+import gov.nasa.jpf.symbc.heap.bounded.HeapChoiceGeneratorBounded;
+import gov.nasa.jpf.symbc.heap.bounded.SymbolicInputHeapBounded;
+import gov.nasa.jpf.symbc.numeric.Comparator;
+import gov.nasa.jpf.symbc.numeric.Expression;
+import gov.nasa.jpf.symbc.numeric.IntegerConstant;
+import gov.nasa.jpf.symbc.numeric.PathCondition;
+import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
+import gov.nasa.jpf.symbc.numeric.SymbolicReal;
+import gov.nasa.jpf.symbc.string.StringSymbolic;
+
+import redis.clients.jedis.Jedis;
+
+public class BoundedHelper {
+
+	/**
+	 * A special bitset that contains only the "null" (=0) bit.
+	 */
+	public static final BitSet NULL_BITSET;
+
+	static {
+		NULL_BITSET = new BitSet();
+		NULL_BITSET.set(0);
+	}
+
+	public static int targetCount = 0;
+
+
+	public static long SATTraverseTime = 0;
+	public static long SATCheckTime = 0;
+	public static long SATDBTime = 0;
+	public static long SATDBHits = 0;
+	public static long SATDBInserts = 0;
+	public static long SATCount = 0;
+	public static long UNSATCount = 0;
+	public static long RESETHEAPTime = 0;
+	public static long REFINETime = 0;
+	public static long HYBRIDREPOKTime = 0;
+	public static long PATHCONDITIONSolvingTime = 0;
+
+	public static Jedis db = null;
+
+	/**
+	 * The time (in seconds) of inactivity until the connection to the redis store timeout.
+	 */
+	private static final int REDIS_TIMEOUT = 2000;
+
+
+	public static ClassLoader efficientClassLoader = null;
+
+	public static Class<?> classUnderAnalysis = null;
+
+
+	private static HeapNode rootHackICSE2014 = null;
+	public static Integer getRootHackICSE2014Index(){
+		return rootHackICSE2014.getIndex();
+	}
+	public static HeapNode getRootHackICSE2014Node(){
+		return rootHackICSE2014;
+	}
+
+
+	
+	
+	public static Set<Integer> keySetOfType(HashMap<Integer, HeapNode> hm, ClassInfo ci){
+		HashSet<Integer> s = new HashSet<Integer>();
+		for (Integer i : hm.keySet()){
+			if (hm.get(i).getType() == ci)
+				s.add(i);
+		}
+		return s;
+	}
+	
+
+	private static LinkedList<String> backbone = new LinkedList<String>();
+
+	public static LinkedList<String> getBackbone(){
+		return backbone;
+	}
+
+
+	//	public static boolean pointsToSymbolicThroughField(ThreadInfo ti, SymbolicInputHeapBounded sihb, HeapNode hnb, FieldInfo fi){
+	//		ElementInfo ei = ti.getElementInfo(hnb.getIndex());
+	//		Integer index = (Integer) ei.getFieldAttr(fi);
+	//		if (index==-1 && !sihb.pointsToNullThroughField(index, fi.getName())){
+	//			return true;
+	//		}
+	//		return false;
+	//		
+	//	}
+
+
+
+	/**
+	 * mfrias: Map LI_Heap will store all the references live at a given time to object indices in the memory heap.
+	 * Since nodes are assigned an id (SymbolicInteger) on creation, a property is that these references 
+	 * should be given in terms of these ids. In this way, if node X's attribute f is concretized 
+	 * as pointing to (a new) node Y, LI_Heap will contain the map id(x).f = id(Y). If node Y previously exists, 
+	 * we will still add id(X).f = Y.
+	 */
+	//	private static HashMap<String, Integer> LI_Heap = new HashMap<String, Integer>();
+
+
+	/**
+	 * mfrias: Map index2HeapNode stores the indexes assigned on node creation. 
+	 */
+	//	private static HashMap<Integer, HeapNode> index2HeapNode = new HashMap<Integer, HeapNode>();
+
+	//	public static HashMap<String, Integer> getLIHeap(){
+	//		return LI_Heap;
+	//	}
+
+//	public static Class<?> loadClassUnderAnalysis(String className){
+//
+//		if (classUnderAnalysis == null){
+//			try {
+//				URL classURL = null;
+//				try{
+//					classURL = new URL("file:///tmp/bliss/jpf-symbc-bounded/build/examples/");
+//				} catch (MalformedURLException e) {}
+//
+//				URL[] classURLs = new URL[]{classURL};
+//
+//				URLClassLoader cl = new URLClassLoader(classURLs);
+//
+//				classUnderAnalysis = cl.loadClass(className);
+//			} catch (ClassNotFoundException e) {
+//				e.printStackTrace();
+//			}
+//
+//		}
+//		if (classUnderAnalysis != null){
+//			return classUnderAnalysis;
+//		} else
+//			throw new RuntimeException();
+//	}
+
+
+	public static boolean isLazy(ThreadInfo ti) {
+		return SymbolicInstructionFactoryBounded.lazyMode;
+	}
+
+	public static BitSet createBitSet(int bitIndex) {
+		BitSet bs = new BitSet();
+		bs.set(bitIndex);
+		return bs;
+	}
+
+	public static BitSet createBitSet(int fromIndex, int toIndex) {
+		BitSet bs = new BitSet();
+		bs.set(fromIndex, toIndex + 1);
+		return bs;
+	}
+
+
+
+	//	private static void tidyLIHeapUp(String attrIndex, String fieldName){
+	//		
+	//		Iterator<?> it = LI_Heap.entrySet().iterator();
+	//		while (it.hasNext()) {
+	//			Map.Entry<String, Integer> pair = ((Map.Entry<String, Integer>)it.next());
+	//			if (pair.getKey().contains("["+attrIndex+"]."+fieldName)){
+	//				it.remove(); // avoids a ConcurrentModificationException
+	//			}	
+	////			if (pair.getValue()==newValue) {
+	////				it.remove();
+	////			}
+	//		}
+	//		
+	//	}
+
+
+
+	//	private static Integer getIndexFromSymbolic(SymbolicInteger si){
+	//		assert si instanceof SymbolicInteger;
+	//		String inputName = si.getName();
+	//		Integer siIndex = index2HeapNode.get(inputName).getIndex();
+	//		return siIndex;
+	//	}
+
+
+
+	//	private static boolean symbIntInHeapLI(SymbolicInteger si){
+	//		int pos = si.getName().lastIndexOf("[");
+	//		String s = si.getName().substring(pos);
+	//
+	//		for (String st : LI_Heap.keySet()){
+	//			if (st.contains(s)){
+	//				return true;	
+	//			} 
+	//				
+	//		}
+	//		return false;
+	//	}
+
+
+	//	public static Integer handleBoundedLazyInitialization(SystemState ss, KernelState ks, ThreadInfo ti, ClassInfo typeClassInfo, String typeName, String fieldName, BitSet objectBound, Object attr, String instructionName) {
+	//		typeName = typeName.substring(1 + typeName.lastIndexOf('.'));
+	//		// If it's the "first" step, create the HeapCGBounded.
+	//		if (!ti.isFirstStepInsn()) {
+	//			ss.setNextChoiceGenerator(new HeapChoiceGeneratorBounded(ss, ti.getVM().getConfig(), typeName, fieldName, objectBound));
+	//			return null;
+	//		}
+	//
+	//		// Remove the object reference from the stack in case of GETFIELD.
+	//		if (instructionName.equals("GETFIELD")) {
+	//			ti.pop();
+	//		}
+	//
+	//		// Get the active CG.
+	//		ChoiceGenerator<?> hcgb0 = ss.getChoiceGenerator();
+	//		assert (hcgb0 instanceof HeapChoiceGeneratorBounded) : "expected HeapChoiceGeneratorBounded, got: " + hcgb0;
+	//		HeapChoiceGeneratorBounded hcgb = (HeapChoiceGeneratorBounded) hcgb0;
+	//
+	//		// The symbolic heap we are going to explore.
+	//		SymbolicInputHeapBounded sihb;
+	//		// The heap path condition to explore.
+	//		PathCondition pc;
+	//
+	//		// We must populate the heap, so find the chained CG.
+	//		HeapChoiceGeneratorBounded prevHcgb = hcgb0.getPreviousChoiceGeneratorOfType(HeapChoiceGeneratorBounded.class);
+	//		if (prevHcgb == null) {
+	//			pc = new PathCondition();	
+	//			sihb = new SymbolicInputHeapBounded();
+	//		} else {
+	///*XXX*/	//	HeapChoiceGeneratorBounded prevHcgb = (HeapChoiceGeneratorBounded) prevHcgb0;
+	//			pc = ((HeapChoiceGeneratorBounded)prevHcgb).getNextPC();
+	//			sihb = ((HeapChoiceGeneratorBounded)prevHcgb).getNextChoice();
+	//		}
+	//
+	//		// Add the next choice to the heap.
+	//		int daIndex = 0;
+	//		Integer target = hcgb.getNextTarget();
+	//		
+	//		targetCount++;
+	//		if (target == -1) {
+	//			daIndex = -1;
+	//			pc._addDet(Comparator.EQ, (SymbolicInteger) attr, new IntegerConstant(-1));
+	//			//inv: attr is an object's SymbolicInteger id.
+	//					
+	//			pointHeapNodeToNull((SymbolicInteger) attr, sihb);
+	//			
+	//						
+	//		/**
+	//		 * Next case considers the addition of a new node to the heap.		
+	//		 */
+	//		} else if (target == -2) {
+	//			
+	//			
+	//			if (sihb.count() == SymbolicInstructionFactoryBounded.lazyLimit) {
+	//				ss.setIgnored(true);
+	//				return null;
+	//			}
+	//			
+	//			daIndex = addNewHeapNode(typeClassInfo, ti, attr, ks, pc, sihb, hcgb.getNewTarget());
+	//
+	//		} else {
+	//		/**
+	//		 * In this case we are obtaining a previously created node whose bound set intersects with the one of the node 
+	//		 * denoted by the symbolic integer attr. We have to add this selection to the LI_Heap, but not to index2HeapNode. 
+	//		 * Because of the ordering in which candidates are generated (null < new < previous), there is to re-define LI_Heap by
+	//		 * removing all references to the previous value.	
+	//		 */ 
+	////			int posLastOpenBracket = ((SymbolicInteger)attr).getName().lastIndexOf("[");
+	////			int posLastCloseBracket = ((SymbolicInteger)attr).getName().lastIndexOf("]");
+	////			String stringedIndex = ((SymbolicInteger)attr).getName().substring(posLastOpenBracket+1, posLastCloseBracket);
+	////			tidyLIHeapUp(stringedIndex, fieldName);
+	////			LI_Heap.put(((SymbolicInteger)attr).getName(), target);
+	//			daIndex = target;
+	////			resetNodeBounds(ss,sihb);
+	//		}
+	//
+	//		// Set the heap and heap path condition.
+	//		hcgb.setNextChoice(sihb);
+	//		hcgb.setNextPC(pc);
+	//
+	//		// Debug if necessary.
+	//		if (SymbolicInstructionFactory.debugMode) {
+	//			System.out.println(instructionName + " pcHeap: " + pc);
+	//		}
+	//
+	//		// Return the index of the new node.
+	//		return daIndex;
+	//	}
+
+
+
+
+
+
+
+
+
+	//	public static Integer handleBoundedLazyInitialization(SystemState ss, KernelState ks, ThreadInfo ti, ClassInfo typeClassInfo, String typeName, String fieldName, int objectIndex, Object attr, String instructionName) {
+	//		if (rootHackICSE2014==null){
+	//			ChoiceGenerator<?> cg = ss.getChoiceGenerator();
+	//			SymbolicInputHeapBounded heap = ((HeapChoiceGeneratorBounded) cg).getNextChoice();
+	//			if (heap != null){
+	//				rootHackICSE2014 = heap.getNodeByIndex(objectIndex);
+	//			}
+	//		}
+	//		if (!ti.isFirstStepInsn()) {
+	//			SymbolicInputHeapBounded heap = null;
+	//			ChoiceGenerator<?> cg = ss.getChoiceGenerator();
+	//			assert (cg != null);
+	//			if (!(cg instanceof HeapChoiceGeneratorBounded)) {
+	//				cg = cg.getPreviousChoiceGeneratorOfType(HeapChoiceGeneratorBounded.class);
+	//			}
+	//			assert (cg != null);
+	//			assert (cg instanceof HeapChoiceGeneratorBounded);
+	//			heap = ((HeapChoiceGeneratorBounded) cg).getNextChoice();
+	//			assert (heap != null);
+	//			HeapNode node = heap.getNodeByIndex(objectIndex);
+	//			assert (node != null);
+	//			return handleBoundedLazyInitialization(ss, ks, ti, typeClassInfo, typeName, fieldName, node.getBoundedName(), attr, instructionName);
+	//		} else {
+	//			return handleBoundedLazyInitialization(ss, ks, ti, typeClassInfo, typeName, fieldName, null, attr, instructionName);
+	//		}
+	//	}
+
+	//	private static Integer getField(ThreadInfo ti, Integer node, String fieldName) {
+	//		if (node == -1) {
+	//			return null;
+	//		}
+	//		ElementInfo ei = ti.getElementInfo(node);
+	//		int index = getFieldIndex(ei, fieldName);
+	//		assert (index != -1);
+	//		FieldInfo fi = ei.getFieldInfo(index);
+	//		if (ei.getFieldAttr(fi) != null) {
+	//			return null;
+	//		} else {
+	//			int ref = ei.getReferenceField(fieldName);
+	//			return ref;
+	//		}
+	//	}
+
+	//	private static int getFieldIndex(ElementInfo ei, String fieldName) {
+	//		for (int i = 0; i < ei.getNumberOfFields(); i++) {
+	//			FieldInfo fi = ei.getFieldInfo(i);
+	//			if (fi.getName().equals(fieldName)) {
+	//				return i;
+	//			}
+	//		}
+	//		return -1;
+	//	}
+
+	/**
+	 * Counts the number of bits that are "on" in a given integer value. Source:
+	 * http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetNaive
+	 * 
+	 * @param value
+	 *            the bits to count
+	 * @return the number of bits set in {@code value}
+	 */
+	public static int countBits(int value) {
+		value = value - ((value >> 1) & 0x55555555); // reuse input as temporary
+		value = (value & 0x33333333) + ((value >> 2) & 0x33333333); // temp
+		return ((value + (value >> 4) & 0xF0F0F0F) * 0x1010101) >> 24; // count
+	}
+
+	/**
+	 * Check if the given value is a power of two. Source:
+	 * http://graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
+	 * 
+	 * @param value
+	 *            the value of investigate
+	 * @return {@code true} if the input is a power of two; otherwise,
+	 *         {@code false}
+	 */
+	public static boolean isPowerOfTwo(int value) {
+		return (value > 0) && ((value & (value - 1)) == 0);
+	}
+
+	/**
+	 * Extracts the node number "nr" from a node name string of the form "Class_nr". If
+	 * the string is equal to "null", the routine returns 0. Otherwise, it
+	 * extracts the number and adds 1 before returning it (because the nodes are
+	 * numbered starting at 0, but this value is reserved for {@code null}).
+	 * 
+	 * @param nodeName the node name
+	 * @return 0 is the node name is "null"; otherwise 1 + the number that occurs in the node
+	 */
+	public static int extractNumber(String nodeName) {
+		if (nodeName.equals("null")) {
+			return 0;
+		}
+		int s = nodeName.indexOf('_') + 1; // position of underscore
+		int e = nodeName.indexOf(','); // position of optional comma
+		if (e > s) {
+			return 1 + Integer.parseInt(nodeName.substring(s, e));
+		} else {
+			return 1 + Integer.parseInt(nodeName.substring(s));
+		}
+	}
+
+
+
+	private static HeapNode getRootHackTACAS2014(SymbolicInputHeapBounded heap) {
+		if (rootHackICSE2014 == null && heap != null && heap.count() > 0){
+			Integer rootIndex = heap.getRootIndexFromAnySymbolicIntegerInHeap();
+			rootHackICSE2014 = heap.getNodeByIndex(rootIndex);
+			//			BoundedHelper.index2HeapNode.put(Integer.valueOf(rootHackICSE2014.getIndex()), rootHackICSE2014);
+		} else if (rootHackICSE2014 == null && (heap == null || heap.count() == 0)){
+			throw new RuntimeException("Method getRootHackICSE2014 failed");
+		}
+
+		return rootHackICSE2014;
+	}
+
+
+
+
+	//	/**
+	//	 * This method is necessary whenever a new definition occurs. If a previously null attribute 
+	//	 * becomes a new node, the previous refinement becomes unsound. This method restores bounds
+	//	 * to a conservative state, and leaves the heap ready for refinement. Only the bounds for nodes in the 
+	//	 * BFS traversal before the first symbolic node are reset.
+	//	 */
+	//	public static boolean resetNodeBounds(SystemState ss,  ThreadInfo ti){
+	//		
+	//		HeapChoiceGeneratorBounded hcgb = ss.getCurrentChoiceGeneratorOfType(HeapChoiceGeneratorBounded.class);
+	//		
+	//		SymbolicInputHeapBounded sihb = hcgb.getCurrentSymInputHeap();
+	//		
+	//		long t0 = System.currentTimeMillis();
+	//
+	//		HeapNode rootNode = getRootHackTACAS2014(sihb); //careful here, may not be defined
+	//		
+	//		if (rootNode == null){
+	//			return false;
+	//		}
+	//		
+	//		Integer root = rootNode.getIndex();
+	//		
+	//		// If the root exists and is not null, reset
+	//		if ((root != null) && (root != -1)) {
+	//			Queue<Integer> resetWorklist = new LinkedList<Integer>();
+	//			Set<Integer> resetVisited = new TreeSet<Integer>();
+	//			resetWorklist.add(root);
+	//			resetVisited.add(root);
+	//			
+	//			boolean done = false;
+	//			while (!resetWorklist.isEmpty() && !done) {
+	//				Integer nodeIndex = resetWorklist.remove();
+	//				if (nodeIndex == null) { // symbolic nodes increase the slack
+	//					done = true;
+	//				} else if (nodeIndex != -1) { // non-null nodes are renamed
+	//					// find the old name
+	//					HeapNode node = sihb.getNodeByIndex(nodeIndex);
+	//					
+	//					BitSet nodeBoundedName = sihb.getBoundByIndex(nodeIndex);
+	//					
+	//					String className = node.getType().getName();
+	//					
+	//					String nodeSymIntName = node.getSymbolic().getName();
+	//					
+	//					
+	//					if (nodeSymIntName.endsWith("left")){
+	//						nodeSymIntName = nodeSymIntName.substring(nodeSymIntName.length() - 5, nodeSymIntName.length() - 1);
+	//					}
+	//
+	//					if (nodeSymIntName.endsWith("right")){
+	//						nodeSymIntName = nodeSymIntName.substring(nodeSymIntName.length() - 6, nodeSymIntName.length() - 1);
+	//					}
+	//
+	//					BoundsMap bounds = HeapChoiceGeneratorBounded.getBounds();
+	//
+	//					
+	//					ElementInfo ei = ti.getElementInfo(nodeIndex);
+	//					
+	//					int refleft = ei.getReferenceField("left");
+	//					Integer left = null;
+	//					if (refleft == -1){
+	//						left = getIndexInLIHeap(hcgb, nodeIndex, "left");
+	//					} else {
+	//						left = refleft;
+	//					}		
+	//					
+	//					if ((left == null) || resetVisited.add(left)) {
+	//						if (left != null && left != -1){
+	//							BitSet resetBoundLeftNode = bounds.getTargets(className, "left", nodeBoundedName);
+	//							HeapNode hnbLeft = sihb.getNodeByIndex(left);
+	//							sihb.setBoundedName(hnbLeft, resetBoundLeftNode);
+	//						}
+	//						resetWorklist.add(left);
+	//					}
+	//					
+	//					int refright = ei.getReferenceField("right");		
+	//					Integer right = null;
+	//					if (refright == -1){
+	//						right = getIndexInLIHeap(hcgb, nodeIndex, "right");
+	//					} else {
+	//						right = refright;
+	//					}
+	//
+	//					if ((right == null) || resetVisited.add(right)) {
+	//						if (right != null && right != -1){
+	//							BitSet resetBoundRightNode = bounds.getTargets(className, "right", nodeBoundedName);
+	//							HeapNode hnbRight = sihb.getNodeByIndex(right);
+	//							sihb.setBoundedName(hnbRight, resetBoundRightNode);
+	//						} 
+	//						resetWorklist.add(right);
+	//					}
+	//				}
+	//			}
+	//		}
+	////		System.out.println(XX.toString());
+	//		
+	//		long t1 = System.currentTimeMillis();
+	//
+	//		RESETHEAPTime += t1-t0;
+	//
+	//		
+	//		return true;
+	//	}
+
+
+	/**
+	 * Refines (=restricts) the names of the nodes on the heap. This removes
+	 * some of the non-deterministic choices that are available for symbolic
+	 * node values.
+	 * 
+	 * @param heap
+	 *            the (partially) symbolic heap
+	 * @param ti
+	 *            information about the current thread used to find fields
+	 * @return {@code true} if the refining worked correctly; otherwise,
+	 *         {@code false}
+	 */
+	public static boolean refineHeap(SymbolicInputHeapBounded sihb, ThreadInfo ti) {
+
+		long q0 = System.currentTimeMillis();
+		
+		
+		HashMap<String, Integer> heapIndices = new HashMap<String, Integer>();
+		for (String st : Helper.classesUnderAnalysis.keySet()){
+			heapIndices.put(st, Integer.valueOf(1));
+		}
+		
+		HashSet<Integer> visited = new HashSet<Integer>();
+		Queue<Integer> worklist = new LinkedList<Integer>();
+//		HeapNode rootNode = sihb.getNodeByIndex(Helper.getRootIndex(sihb));
+		Integer rootIndex = Helper.getRootIndex(sihb);
+		worklist.add(rootIndex);
+		visited.add(rootIndex);
+		boolean done = false;
+
+		while (!worklist.isEmpty() && !done) {
+			Integer nodeIndex = worklist.remove();
+			if (nodeIndex == null) {
+				done = true;
+			} else if (nodeIndex != MJIEnv.NULL) { // non-null nodes are renamed	
+				String typeNodeIndex = sihb.nodesByIndex.get(nodeIndex).getType().getName();
+				if (!sihb.getBoundByIndex(nodeIndex).get(heapIndices.get(typeNodeIndex))) {
+					long q1 = System.currentTimeMillis();
+					REFINETime += q1 - q0;
+					//					System.out.println("killed");
+					return false;
+				} else {
+					BitSet correctNodeIndex = new BitSet();
+					correctNodeIndex.set(heapIndices.get(typeNodeIndex));
+					sihb.getBoundByIndex(nodeIndex).and(correctNodeIndex);
+				}
+
+//				System.out.println(heapIndices.get(typeNodeIndex));
+
+				heapIndices.put(typeNodeIndex, heapIndices.get(typeNodeIndex)+1);
+
+				for (String fieldName : getBackbone()){
+					HeapNode hn = sihb.getNodeByIndex(nodeIndex);
+					ClassInfo ci = hn.getType();
+					if (ci.getDeclaredInstanceField(fieldName) != null){
+						Integer index = sihb.pointsToThroughField(nodeIndex, fieldName);
+
+						if ((index == null) || visited.add(index)) {
+							worklist.add(index);
+						}
+					}	
+				}	
+			}
+		}
+		long q1 = System.currentTimeMillis();
+		REFINETime += q1 - q0;
+		return true;
+	}	
+
+
+
+
+	//		HeapNode rootNode = getRootHackTACAS2014(sihb);
+	//		Integer root = rootNode.getIndex();
+	//
+	//		// If the root exists and is not null, refine
+	//		if ((root != null) && (root != -1)) {
+	//			Queue<Integer> worklist = new LinkedList<Integer>();
+	//			Set<Integer> visited = new TreeSet<Integer>();
+	//			worklist.add(root);
+	//			visited.add(root);
+	//			int minimumNr = 1;
+	//			boolean done = false;
+	//							
+	//			while (!worklist.isEmpty() && !done) {
+	//				Integer nodeIndex = worklist.remove();
+	//				if (nodeIndex == null) {
+	//					done = true;
+	//				} else if (nodeIndex != -1) { // non-null nodes are renamed			
+	//					if (!sihb.getBoundByIndex(nodeIndex).get(minimumNr)) {
+	//						long q1 = System.currentTimeMillis();
+	//						REFINETime += q1 - q0;
+	//						return false;
+	//					} else {
+	//						BitSet correctNodeIndex = new BitSet();
+	//						correctNodeIndex.set(minimumNr);
+	//						sihb.getBoundByIndex(nodeIndex).and(correctNodeIndex);
+	//					}
+	//					minimumNr++;
+	//					
+	//					ElementInfo ei = ti.getElementInfo(nodeIndex);
+	//					
+	//					int refleft = ei.getReferenceField("left");
+	//					int refright = ei.getReferenceField("right");		
+	//					
+	//					Integer left;
+	//					Integer right;
+	//					if (refleft == -1){
+	//						left = getIndexInLIHeap(hcgb, nodeIndex, "left");
+	//					} else {
+	//						left = refleft;
+	//					}
+	//					if (refright == -1){
+	//						right = getIndexInLIHeap(hcgb, nodeIndex, "right");
+	//					} else {
+	//						right = refright;
+	//					}
+	//				    
+	//				    
+	//					
+	//					if ((left == null) || visited.add(left)) {
+	//						worklist.add(left);
+	//					}
+	//					if ((right == null) || visited.add(right)) {
+	//						worklist.add(right);
+	//					}
+	//				}
+	//			}
+	//		}
+	//		long q1 = System.currentTimeMillis();
+	//		REFINETime += q1 - q0;
+	//		return true;
+	//	}
+
+
+	public static boolean processHeapWithSolver(SymbolicInputHeapBounded heap, ThreadInfo ti) {
+
+
+		//		if (SymbolicInstructionFactoryBounded.useAuxSolverDebug) {
+		//			showHeap(hcgb, ti);
+		//		}
+
+		System.out.println("ENTERED ProcessHeapWithSolver");
+		StringBuilder sb = new StringBuilder();	
+
+		List<Integer> facts = new LinkedList<Integer>();
+
+		HeapNode rootNode = getRootHackTACAS2014(heap);
+
+		Integer rootIndex = rootNode.getIndex();
+
+		if ((rootIndex != null) && (rootIndex != MJIEnv.NULL)) {
+
+			long t0 = System.currentTimeMillis();
+
+			HashMap<Integer, Integer> numbering = new HashMap<Integer, Integer>();
+
+			Queue<Integer> worklist = new LinkedList<Integer>();
+			HashSet<Integer> visited = new HashSet<Integer>();
+
+			worklist.add(rootIndex);
+			visited.add(rootIndex);
+
+			while (!worklist.isEmpty()) {
+				Integer nodeIndex = worklist.remove();
+				if (nodeIndex == null) {
+					// SYMB
+					sb.append("S.");
+				} else if (nodeIndex == MJIEnv.NULL) {
+					// null
+					sb.append("n.");
+				} 
+				//				else if (nodeIndex == -2) {
+				//					break;
+				//				} 
+				else {	
+
+					Integer number = numbering.get(nodeIndex);
+					if (number == null) {
+						number = numbering.size();
+						numbering.put(nodeIndex, number);
+					}
+
+					sb.append(number.intValue());
+					sb.append('.');
+
+					boolean doBreak = false;
+					for (String fieldName : BoundedHelper.getBackbone()){
+
+						Integer index = heap.pointsToThroughField(nodeIndex, fieldName);
+
+						List<Integer> laux = edgeFacts(heap, fieldName, nodeIndex, index);
+						if (laux.isEmpty()){
+							doBreak = true;
+						} else {
+							if (laux.contains(-2)){
+								return false;
+							} else
+								facts.addAll(laux);
+						}	
+
+						if ((index == null) || (index == MJIEnv.NULL) || visited.add(index)) {
+							worklist.add(index);
+						}
+					}
+				}
+			}
+
+
+			SATTraverseTime += System.currentTimeMillis() - t0;
+
+			String dbKey = sb.toString();
+
+			if (SymbolicInstructionFactoryBounded.boundedSatDBDebug) {
+				System.out.println(" dbKey: " + dbKey);
+			}
+
+
+			if (SymbolicInstructionFactoryBounded.boundedSatDB) {
+				t0 = System.currentTimeMillis();
+				if(db == null) {
+					db = new Jedis("localhost", 6379, REDIS_TIMEOUT);
+					if(SymbolicInstructionFactoryBounded.boundedSatDBDebug) {
+						System.out.println("Connected to redis server at localhost:6379");
+					}
+				}
+				String answer = db.get(dbKey);
+				if (answer != null) {
+					int answerAsInt = Integer.parseInt(answer);
+					if (answerAsInt <= SymbolicInstructionFactory.lazyLimit) {
+						SATDBTime += System.currentTimeMillis() - t0;
+						SATDBHits++;
+						if (SymbolicInstructionFactoryBounded.boundedSatDBDebug) {
+							System.out.println(" DB HIT   key: " + dbKey);
+						}
+						return true;
+					}
+					if (SymbolicInstructionFactoryBounded.boundedSatDBDebug) {
+						System.out.println(" DB MISS* key: " + dbKey);
+					}
+				} else {
+					if (SymbolicInstructionFactoryBounded.boundedSatDBDebug) {
+						System.out.println(" DB MISS  key: " + dbKey);
+					}
+				}
+
+				SATDBTime += System.currentTimeMillis() - t0;
+			}
+
+			//org.sat4j.core.VecInt assumptions = new org.sat4j.core.VecInt();
+			//for (Integer fact : facts) {
+			//	assumptions.push(fact);
+			//}
+
+			int[] assumptions = new int[facts.size()];
+			int pos = 0;
+			for (Integer fact : facts) {
+				assumptions[pos] = fact;
+				pos += 1;
+			}
+
+			//try {
+				t0 = System.currentTimeMillis();
+				//boolean verdict = HeapChoiceGeneratorBounded.auxSolver.isSatisfiable(assumptions);
+				System.out.println("SOLVER INVOKED");
+				boolean verdict = HeapChoiceGeneratorBounded.auxSolver.solve(assumptions);
+
+
+				//				if (!verdict){System.out.println("UNSAT");} else {System.out.println("SAT");}
+
+				long elapsed = System.currentTimeMillis() - t0;
+				//				System.out.println(elapsed);
+				SATCheckTime += elapsed;
+
+				if (verdict) {
+					SATCount++;
+					if(SymbolicInstructionFactoryBounded.boundedSatDB) {
+						db.set(dbKey, Integer.toString(SymbolicInstructionFactory.lazyLimit));
+						SATDBInserts++;
+						if (SymbolicInstructionFactoryBounded.boundedSatDBDebug) {
+							System.out.println(" DB INSERT   key: " + dbKey);
+						}
+					}
+					if(SymbolicInstructionFactoryBounded.useAuxSolverDebug) {
+						System.out.println("     SAT in " + elapsed + " ms");						
+					}
+				} else {
+					UNSATCount++;
+					if(SymbolicInstructionFactoryBounded.useAuxSolverDebug) {
+						System.out.println("   UNSAT in " + elapsed + " ms");						
+					}					
+				}
+
+				return verdict;
+			//} catch (org.sat4j.specs.TimeoutException e) {
+			//	// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+		}
+
+		return true;
+	}
+
+
+
+
+
+
+	private static List<Integer> edgeFacts(SymbolicInputHeapBounded heap,  String relName, Integer fromIndex, Integer toIndex) {
+		BitSet sourceBoundSet, targetBoundSet;
+
+		// TODO: This should be a list of clauses, not just a list of facts,
+		// so we can express cases like N0->N1,N2 that require more than a fact.
+		List<Integer> facts = new LinkedList<Integer>();
+
+		assert(fromIndex != null) : "edge origin should never be symbolic";
+		assert(fromIndex != MJIEnv.NULL) : "edge origin should never be null";
+
+		sourceBoundSet = heap.getBoundByIndex(fromIndex);
+
+
+		boolean sourceHasSingletonBound = sourceBoundSet.cardinality()==1;
+		if (!sourceHasSingletonBound) {
+			// can't say anything for sure if edge src is multiple
+			// return without adding any facts
+			return facts;
+		}
+
+		String singleNodeInSourceBoundNameAccordingToTACOBounds = sourceBoundSet.toString();
+
+		if(toIndex == null) {
+			// dest is symbolic; no associated pvar changes
+		} else if(toIndex == MJIEnv.NULL) {
+			int pvar = HeapChoiceGeneratorBounded.getPvarFor(singleNodeInSourceBoundNameAccordingToTACOBounds, relName, "null");
+			if (pvar != -1){
+				facts.add(pvar);
+			}	
+			//System.out.print(fromName + "-" + relName + "->" + toName + "(" + pvar + ")" + "; ");
+		} else {
+			targetBoundSet = heap.getBoundByIndex(toIndex);
+
+
+
+
+			boolean targetHasSingletonBound = targetBoundSet.cardinality()==1;
+			if(targetHasSingletonBound) {
+				// both origin and dest are single concrete values
+				// set origin->dest pvar to TRUE
+				String singleNodeInTargetBoundNameAccordingToTACOBounds = "{" + Integer.toString(targetBoundSet.nextSetBit(0)) + "}";
+
+
+				int pvar = HeapChoiceGeneratorBounded.getPvarFor(singleNodeInSourceBoundNameAccordingToTACOBounds, relName, singleNodeInTargetBoundNameAccordingToTACOBounds);
+				if (pvar != -1){
+					facts.add(pvar);
+				} else {
+					facts.add(-2);
+				}
+				//System.out.print(fromName + "-" + relName + "->" + toName + "(" + pvar + ")" + "; ");
+
+				//for(int coso : HeapChoiceGeneratorBounded.getPvarsFor(fromName, relName))
+				//	System.out.print("<" + coso + "> ");
+				//System.out.print("; ");
+
+			} else {
+				// origin is single value but there are multiple dest names
+				// should say something milder (still PEND!)
+				//System.out.print(fromName + "-" + relName + "->" + toName + "(" + "PEND_multidest" + ")" + "; ");
+			}
+		}
+
+		return facts;
+	}
+
+
+
+	/*
+	 * Prints a description of the given heap to System.out.
+	 * Each edge is rendered using renderEdge() below.
+	 * 
+	 */
+	//	public static void showHeap(HeapChoiceGeneratorBounded hcgb, ThreadInfo ti) {
+	//		SymbolicInputHeapBounded heap = hcgb.getCurrentSymInputHeap();
+	//		StringBuffer XX = new StringBuffer();
+	//		HeapNode rootNode = getRootHackTACAS2014(heap);
+	//		Integer rootIndex = rootNode.getIndex();
+	//		if ((rootIndex != null) && (rootIndex != -1)) {
+	//			Queue<Integer> worklist = new LinkedList<Integer>();
+	//			Set<Integer> visited = new TreeSet<Integer>();
+	//			worklist.add(rootIndex);
+	//			visited.add(rootIndex);
+	//			while (!worklist.isEmpty()) {
+	//				Integer nodeIndex = worklist.remove();
+	//				if (nodeIndex == null) {
+	//					//XX.append("SYMB");
+	//				} else if (nodeIndex == -1) {
+	//					//XX.append("null");
+	//				} else {
+	//					
+	//					
+	//					HeapNode node =  heap.getNodeByIndex(nodeIndex);
+	//					
+	//					Integer leftNodeIndex = getIndexInLIHeap(hcgb, node.getIndex(), "left");
+	//
+	//					XX.append(renderEdge(heap, "left", nodeIndex, leftNodeIndex));
+	//					if ((leftNodeIndex == null) || visited.add(leftNodeIndex)) {
+	//						worklist.add(leftNodeIndex);
+	//					}
+	//
+	//					Integer rightNodeIndex = getIndexInLIHeap(hcgb, node.getIndex(), "right");
+	//
+	//					XX.append(renderEdge(heap, "right", nodeIndex, rightNodeIndex));
+	//					if ((rightNodeIndex == null) || visited.add(rightNodeIndex)) {
+	//						worklist.add(rightNodeIndex);
+	//					}
+	//				}
+	//			}		
+	//		}
+	//
+	//		System.out.println(XX.toString());
+	//	}
+	//
+	//	
+	//	/*
+	//	 * Returns a String description of the given edge, e.g.
+	//	 * 
+	//	 *     "FooBar_1-left->FooBar_2; "
+	//	 *     
+	//	 */
+	//	private static String renderEdge(SymbolicInputHeapBounded heap, String relName, Integer fromIndex, Integer toIndex) {
+	//		String fromName, toName;
+	//
+	//		assert(fromIndex != null) : "edge origin should never be symbolic";
+	//		assert(fromIndex != -1) : "edge origin should never be null";
+	//		HeapNode fromNode = heap.getNodeByIndex(fromIndex);
+	//		HeapNode toNode = heap.getNodeByIndex(toIndex);
+	//		
+	//		fromName = heap.getBoundByIndex(fromNode.getIndex()).toString();
+	//
+	//		if (toIndex == null) {
+	//			toName = "SYMB";
+	//		} else if(toIndex == -1) {
+	//			toName = "null";
+	//		} else {
+	//			toName = heap.getBoundByIndex(toNode.getIndex()).toString();
+	//		}
+	//		
+	//		return fromName + "-" + relName + "->" + toName + "; ";
+	//	}
+	//
+	//	
+	//	
+	//	
+	////	public static void pointHeapNodeToNull(SymbolicInteger si, SymbolicInputHeapBounded heap){
+	////		HashSet<SymbolicInteger> nodesToNull = heap.getMapToNull();
+	////		nodesToNull.add(si);
+	////	}
+	//	
+	//	
+	//	
+	//
+	public static int addNewHeapNode(ClassInfo typeClassInfo, ThreadInfo ti, int daIndex, Object attr,
+			KernelState ks, PathCondition pcHeap, SymbolicInputHeapBounded symInputHeap,
+			int numSymRefs, HeapNode[] prevSymRefs, BitSet targetBound ) {
+		daIndex = ks.heap.newObject(typeClassInfo, ti).getObjectRef();
+		ks.heap.registerPinDown(daIndex);
+		String refChain = ((SymbolicInteger) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
+		SymbolicInteger newSymRef = new SymbolicInteger( refChain);
+		ElementInfo eiRef = ti.getElementInfo(daIndex);
+
+		// neha: this change allows all the fields in the class hierarchy of the
+		// object to be initialized as symbolic and not just its instance fields
+
+		int numOfFields = eiRef.getNumberOfFields();
+		FieldInfo[] fields = new FieldInfo[numOfFields];
+		for(int fieldIndex = 0; fieldIndex < numOfFields; fieldIndex++) {
+			fields[fieldIndex] = eiRef.getFieldInfo(fieldIndex);
+		}
+
+		BoundedHelper.initializeInstanceFields(fields, eiRef,refChain);
+
+		//neha: this change allows all the static fields in the class hierarchy
+		// of the object to be initialized as symbolic and not just its immediate
+		// static fields
+		ClassInfo superClass = typeClassInfo;
+		while(superClass != null) {
+			FieldInfo[] staticFields = superClass.getDeclaredStaticFields();
+			Helper.initializeStaticFields(staticFields, superClass, ti);
+			superClass = superClass.getSuperClass();
+		}
+
+		// create new HeapNode based on above info
+		// update associated symbolic input heap
+		HeapNode n = new HeapNode(daIndex,typeClassInfo,newSymRef);
+		symInputHeap._add(n, targetBound);
+		symInputHeap.setBoundedName(n, targetBound);
+		pcHeap._addDet(Comparator.NE, newSymRef, MJIEnv.NULL);
+		//pcHeap._addDet(Comparator.EQ, newSymRef, (SymbolicInteger) attr);
+		for (int i=0; i< numSymRefs; i++)
+			pcHeap._addDet(Comparator.NE, n.getSymbolic(), prevSymRefs[i].getSymbolic());
+		return daIndex;
+	}
+
+
+	public static void initializeInstanceFields(FieldInfo[] fields, ElementInfo eiRef,
+			String refChain){
+		for (int i=0; i<fields.length;i++){
+			initializeInstanceField(fields[i], eiRef, refChain, "");
+		}	
+	}
+
+
+	public static Expression initializeInstanceField(FieldInfo field, ElementInfo eiRef,
+			String refChain, String suffix){
+		Expression sym_v = null;
+		String name ="";
+
+		name = field.getName();
+		String fullName = refChain + "." + name + suffix;
+		if (field instanceof IntegerFieldInfo || field instanceof LongFieldInfo) {
+			sym_v = new SymbolicInteger(fullName);
+		} else if (field instanceof FloatFieldInfo || field instanceof DoubleFieldInfo) {
+			sym_v = new SymbolicReal(fullName);
+		} else if (field instanceof ReferenceFieldInfo){
+			if (field.getType().equals("java.lang.String"))
+				sym_v = new StringSymbolic(fullName);
+			else
+				sym_v = new SymbolicInteger(fullName);
+		} else if (field instanceof BooleanFieldInfo) {
+			//	treat boolean as an integer with range [0,1]
+			sym_v = new SymbolicInteger(fullName, 0, 1);
+		}
+		eiRef.setFieldAttr(field, sym_v);
+		return sym_v;
+	}
+
+
+
+
+	public static void initializeStaticFields(FieldInfo[] staticFields, ClassInfo ci,
+			ThreadInfo ti){
+
+		if (staticFields.length > 0) {
+			for (int i = 0; i < staticFields.length; i++)
+				initializeStaticField(staticFields[i], ci, ti, "");
+		}
+	}
+
+
+
+	public static Expression initializeStaticField(FieldInfo staticField, ClassInfo ci,
+			ThreadInfo ti, String suffix){
+
+		Expression sym_v = null;
+		String name ="";
+
+		name = staticField.getName();
+		String fullName = ci.getName() + "." + name + suffix;// + "_init";
+		if (staticField instanceof IntegerFieldInfo || staticField instanceof LongFieldInfo) {
+			sym_v = new SymbolicInteger(fullName);
+		} else if (staticField instanceof FloatFieldInfo
+				|| staticField instanceof DoubleFieldInfo) {
+			sym_v = new SymbolicReal(fullName);
+		}else if (staticField instanceof ReferenceFieldInfo){
+			if (staticField.getType().equals("java.lang.String"))
+				sym_v = new StringSymbolic(fullName);
+			else
+				sym_v = new SymbolicInteger(fullName);
+		} else if (staticField instanceof BooleanFieldInfo) {
+			//						treat boolean as an integer with range [0,1]
+			sym_v = new SymbolicInteger(fullName, 0, 1);
+		}
+		StaticElementInfo sei = ci.getStaticElementInfo();
+		if (sei == null) {
+			ci.registerClass(ti);
+			sei = ci.getStaticElementInfo();
+		}
+		if (sei.getFieldAttr(staticField) == null) {
+			sei.setFieldAttr(staticField, sym_v);
+		}
+		return sym_v;
+	}
+
+	public static int addNewHeapNode(ClassInfo ci, ThreadInfo ti, Object attr, 
+			KernelState ks, PathCondition pc, SymbolicInputHeapBounded heap, BitSet bound) {
+		int idx = ks.heap.newObject(ci, ti).getObjectRef();
+
+		ks.heap.registerPinDown(idx);
+		String chain = ((SymbolicInteger) attr).getName() + "[" + idx + "]";
+		SymbolicInteger ref = new SymbolicInteger(chain);
+		ElementInfo ei = ti.getElementInfo(idx);
+		int numOfFields = ei.getNumberOfFields();
+		FieldInfo[] fields = new FieldInfo[numOfFields];
+		for (int i = 0; i < numOfFields; i++) {
+			fields[i] = ei.getFieldInfo(i);
+		}
+		Helper.initializeInstanceFields(fields, ei, chain);
+		ClassInfo superClass = ci;
+		while (superClass != null) {
+			FieldInfo[] staticFields = superClass.getDeclaredStaticFields();
+			Helper.initializeStaticFields(staticFields, superClass, ti);
+			superClass = superClass.getSuperClass();
+		}
+
+		HeapNode n = new HeapNode(idx, ci, ref);
+		heap._add(n, bound);
+		pc._addDet(Comparator.NE, ref, MJIEnv.NULL);
+		heap.addPCs(pc, n);
+		return idx;
+	}
+
+
+	public static BitSet getTargetBoundSet(SymbolicInputHeapBounded sihb, ClassInfo ci, HeapNode hnb, String fieldName, BoundsMap bounds){
+		BitSet sourceBound = sihb.getBoundByIndex(hnb.getIndex());
+		BitSet output = new BitSet();
+		output = bounds.getTargets(ci.getName(), fieldName, sourceBound);
+		return output;
+	}
+
+
+
+}

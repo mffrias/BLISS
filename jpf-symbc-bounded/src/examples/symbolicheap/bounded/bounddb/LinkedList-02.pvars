@@ -1,0 +1,13 @@
+LinkedList/LinkedList_0/header/null/1
+LinkedList/LinkedList_0/header/LinkedListNode_0/2
+LinkedList/LinkedList_0/header/LinkedListNode_1/3
+LinkedListNode/LinkedListNode_0/next/LinkedListNode_0/4
+LinkedListNode/LinkedListNode_1/next/LinkedListNode_0/5
+LinkedListNode/LinkedListNode_0/next/null/6
+LinkedListNode/LinkedListNode_0/next/LinkedListNode_1/7
+LinkedListNode/LinkedListNode_1/next/null/8
+LinkedListNode/LinkedListNode_0/prev/LinkedListNode_0/15
+LinkedListNode/LinkedListNode_1/prev/LinkedListNode_0/16
+LinkedListNode/LinkedListNode_0/prev/null/17
+LinkedListNode/LinkedListNode_0/prev/LinkedListNode_1/18
+LinkedListNode/LinkedListNode_1/prev/null/19

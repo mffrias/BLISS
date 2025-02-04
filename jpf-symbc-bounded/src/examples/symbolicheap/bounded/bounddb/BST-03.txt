@@ -1,0 +1,12 @@
+#BST_0
+BST/BST_0/left/BST_1
+BST/BST_0/left/null
+BST/BST_0/right/BST_1
+BST/BST_0/right/BST_2
+BST/BST_0/right/null
+BST/BST_1/left/BST_2
+BST/BST_1/left/null
+BST/BST_1/right/BST_2
+BST/BST_1/right/null
+BST/BST_2/left/null
+BST/BST_2/right/null

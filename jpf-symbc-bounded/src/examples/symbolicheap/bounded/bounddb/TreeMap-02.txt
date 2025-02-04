@@ -1,0 +1,13 @@
+#TreeMap_0
+@root
+@left
+@right
+TreeMap/TreeMap_0/root/Entry_0
+Entry/Entry_0/left/Entry_1
+Entry/Entry_0/left/null
+Entry/Entry_0/parent/null
+Entry/Entry_0/right/Entry_1
+Entry/Entry_0/right/null
+Entry/Entry_1/left/null
+Entry/Entry_1/parent/Entry_0
+Entry/Entry_1/right/null

@@ -1,0 +1,754 @@
+package symbolicheap.bounded;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import gov.nasa.jpf.symbc.Debug;
+import gov.nasa.jpf.jvm.Verify;
+//import symbolicheap.bounded.Entry;
+
+
+public class TreeMap {
+
+	private class Pair<T, U> {
+		private T a;
+		private U b;
+
+		public Pair(T a, U b) {
+			this.a = a;
+			this.b = b;
+		}
+
+		public T first() {
+			return a;
+		}
+
+		public U second() {
+			return b;
+		}
+	}
+
+	
+//	public static class Entry {
+//		
+//		public static final Entry SYMBOLICENTRY = new Entry(); //field added to execute the hybridRepOK.
+//		public static final int SYMBOLICINT = (int) Integer.MIN_VALUE; //field added to execute the hybridRepOK.
+//
+//		public static final int RED = 0;
+//
+//		public static final int BLACK = 1;
+//
+//		
+//		public int key;
+//
+//		public Entry left = null;
+//
+//		public Entry right = null;
+//
+//		public Entry parent;
+//
+//		public int color = BLACK;
+//
+//		public Entry(){}
+//		
+//		public Entry(int key, Entry parent) {
+//			this.key = key;
+//			this.parent = parent;
+//		}
+//
+//		public Entry(int key, Entry left, Entry right, Entry parent, int color) {
+//			this.key = key;
+//			this.left = left;
+//			this.right = right;
+//			this.parent = parent;
+//			this.color = color;
+//		}
+//
+//		public int getKey() {
+//			return key;
+//		}
+//
+//		public String toString() {
+//			String res = "{ " + (color == BLACK ? "B" : "R") + " ";
+//			if (left == null) {
+//				res += "null";
+//			} else {
+//				res += left.toString();
+//			}
+//			res += " ";
+//			if (right == null) {
+//				res += "null";
+//			} else {
+//				res += right.toString();
+//			}
+//			res += " }";
+//			return res;
+//		}
+//
+//		public String concreteString(int max_level, int cur_level) {
+//			String res;
+//			if (cur_level == max_level) {
+//				res = "{ subtree }";
+//				//		System.out.println("Brekekek");
+//			} else {
+//				res = "{ " + (color == BLACK ? "B" : "R") + key + " ";
+//				if (left == null) {
+//					res += "null";
+//				} else {
+//					res += left.concreteString(max_level, cur_level + 1);
+//				}
+//				res += " ";
+//				if (right == null) {
+//					res += "null";
+//				} else {
+//					res += right.concreteString(max_level, cur_level + 1);
+//				}
+//				res += " }";
+//			}
+//
+//			return res;
+//		}
+//
+//		public void print(int k) {
+//			
+//			/*for (int i = 0; i < k; i++)
+//				System.out.print(" ");*/
+//			//System.out.println(key + (color == BLACK ? "(B)" : "(R)"));
+//			
+//			if (left != null) {
+//				left.print(k + 2);
+//			}
+//			if (right != null) {
+//				right.print(k + 2);
+//			}
+//		}
+//
+//	}
+	
+	
+	
+	public static final TreeMap SYMBOLICTREEMAP = new TreeMap(); //field added to execute the hybridRepOK.
+	public static final int SYMBOLICINT = (int) Integer.MIN_VALUE; //field added to execute the hybridRepOK.
+
+	
+	public Entry root = null;
+
+	public int size = 0;
+
+	
+
+	
+	public boolean hybridRepOK(){
+		Set<Entry> visited = new HashSet<Entry>();
+		List<Entry> worklist = new ArrayList<Entry>();
+		Entry root = null;
+		if (this == SYMBOLICTREEMAP){
+			return true;
+		}	
+		else {
+			 root = this.root;
+		}
+		
+
+
+		if (root != null && root != Entry.SYMBOLICENTRY){
+			visited.add(root);
+
+			worklist.add(root);
+			
+			if (root.parent != Entry.SYMBOLICENTRY && root.parent != null)
+				return false;
+
+			while (!worklist.isEmpty()) {
+				Entry node = worklist.remove(0);
+				
+				Entry left = node.left;
+				if (left != null && left != Entry.SYMBOLICENTRY) {
+					if (!visited.add(left)) {
+						return false;
+					}
+					
+					if (left.parent != Entry.SYMBOLICENTRY && left.parent != node) {
+						return false;
+					}
+					worklist.add(left);
+
+				}
+				
+				Entry right = node.right;
+				if (right != null && right != Entry.SYMBOLICENTRY) {
+					if (!visited.add(right)) {
+						return false;
+					}
+					
+					if (right.parent != Entry.SYMBOLICENTRY && right.parent != node) {
+						return false;
+					}
+					worklist.add(right);
+				}
+
+			}
+			return visited.size() <= LIMIT && this.hybridRepOK_colors(this);	
+		} else {
+			return true;
+		}
+	}
+
+	
+	
+	public boolean hybridRepOK_colors(TreeMap t){
+		Entry root  = t.root;
+		if (root != Entry.SYMBOLICENTRY && root.color != SYMBOLICINT){
+			if (root.color != Entry.BLACK)
+				return false;
+			List<Entry> worklist = new ArrayList<Entry>();
+			worklist.add(root);
+			while (!worklist.isEmpty()) {
+				Entry current = worklist.remove(0);
+				Entry cl = current.left;
+				Entry cr = current.right;
+				if (current.color == Entry.RED) {
+					if (cl != null && cl.color == Entry.RED) {
+						return false;
+					}
+					if (cr != null && cr.color == Entry.RED) {
+						return false;
+					}
+				}
+				if (cl != null && cl != Entry.SYMBOLICENTRY) {
+					worklist.add(cl);
+				}
+				if (cr != null && cr != Entry.SYMBOLICENTRY) {
+					worklist.add(cr);
+				}
+			}
+			int numberOfBlack = -1;
+			List<Pair<Entry, Integer>> worklist2 = new ArrayList<TreeMap.Pair<Entry, Integer>>();
+			
+			worklist2.add(new Pair<Entry, Integer>(root, 0)); //assumes root is not symbolic, which was checked above
+			//		root.dumpStructure(root);
+			while (!worklist2.isEmpty()) {
+				//			System.out.println("->0");
+				Pair<Entry, Integer> p = worklist2.remove(0);
+				Entry e = p.first();
+				int n = p.second();
+				if (e != null && e.color == Entry.BLACK) {
+					n++;
+					//				System.out.println("->1 n=" + n);
+				}
+				if (e == null) {
+					//				System.out.println("->2");
+					if (numberOfBlack == -1) {
+						numberOfBlack = n;
+						//					System.out.println("->3 n=" + n);
+					} else if (numberOfBlack != n) {
+						//					System.out.println("REPOK FAIL n = " + n + " noBlk = " + numberOfBlack);
+						return false;
+					}
+				} else {
+					//				System.out.println("->4");
+					if (e.left != Entry.SYMBOLICENTRY)
+						worklist2.add(new Pair<Entry, Integer>(e.left, n));
+					if (e.right != Entry.SYMBOLICENTRY)
+						worklist2.add(new Pair<Entry, Integer>(e.right, n));
+				}
+			}
+			return true;
+		} else
+			return true;
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	private void incrementSize() { /*modCount++;*/
+		size++;
+	}
+
+	private void decrementSize() { /*modCount++;*/
+		size--;
+	}
+
+	public TreeMap() {
+	}
+
+	public int size() {
+		return size;
+	}
+
+	public boolean containsKey(int key) {
+		return getEntry(key) != null;
+	}
+
+	private Entry getEntry(int key) {
+		Entry p = root;
+		while (p != null) {
+			if (key == p.key) {
+				return p;
+			} else {
+				if (key < p.key) {
+					p = p.left;
+				} else {
+					p = p.right;
+				}
+			}
+		}
+		return null;
+	}
+
+	public void put(int key) {
+		Entry t = root;
+		if (t == null) {
+			incrementSize();
+			root = new Entry(key, null);
+			return;
+		}
+		while (true) {
+			if (key == t.key) {
+				return;
+			} else if (key < t.key) {
+				if (t.left != null) {
+					t = t.left;
+				} else {
+					incrementSize();
+					t.left = new Entry(key, t);
+					fixAfterInsertion(t.left);
+					return;
+				}
+			} else { // key > t.key
+				if (t.right != null) {
+					t = t.right;
+				} else {
+					incrementSize();
+					t.right = new Entry(key, t);
+					fixAfterInsertion(t.right);
+					return;
+				}
+			}
+		}
+	}
+
+	public void remove(int key) {
+		Entry p = getEntry(key);
+		if (p == null) {
+			return;
+		}
+
+		deleteEntry(p);
+		return;
+	}
+
+	public void print() {
+		if (root != null) {
+			root.print(0);
+		}
+	}
+
+	public String toString() {
+		String res = "";
+		if (root != null) {
+			res = root.toString();
+		}
+		return res;
+	}
+
+	public String concreteString(int max_level) {
+		String res = "";
+		if (root != null) {
+			res = root.concreteString(max_level, 0);
+		}
+		return res;
+	}
+
+
+	
+
+	private Entry successor(Entry t) {
+		if (t == null) {
+			return null;
+		} else if (t.right != null) {
+			Entry p = t.right;
+			while (p.left != null) {
+				p = p.left;
+			}
+			return p;
+		} else {
+			Entry p = t.parent;
+			Entry ch = t;
+			while (p != null && ch == p.right) {
+				ch = p;
+				p = p.parent;
+			}
+			return p;
+		}
+	}
+
+	private static int colorOf(Entry p) {
+		return (p == null ? Entry.BLACK : p.color);
+	}
+
+	private static Entry parentOf(Entry p) {
+		return (p == null ? null : p.parent);
+	}
+
+	private static void setColor(Entry p, int c) {
+		if (p != null) {
+			p.color = c;
+		}
+	}
+
+	private static Entry leftOf(Entry p) {
+		return (p == null) ? null : p.left;
+	}
+
+	private static Entry rightOf(Entry p) {
+		return (p == null) ? null : p.right;
+	}
+
+	/** From CLR **/
+	private void rotateLeft(Entry p) {
+		Entry r = p.right;
+		p.right = r.left;
+		if (r.left != null) {
+			r.left.parent = p;
+		}
+		r.parent = p.parent;
+		if (p.parent == null) {
+			root = r;
+		} else {
+			if (p.parent.left == p) {
+				p.parent.left = r;
+			} else {
+				p.parent.right = r;
+			}
+		}
+		r.left = p;
+		p.parent = r;
+	}
+
+	/** From CLR **/
+	private void rotateRight(Entry p) {
+		Entry l = p.left;
+		p.left = l.right;
+		if (l.right != null) {
+			l.right.parent = p;
+		}
+		l.parent = p.parent;
+		if (p.parent == null) {
+			root = l;
+		} else {
+			if (p.parent.right == p) {
+				p.parent.right = l;
+			} else {
+				p.parent.left = l;
+			}
+		}
+		l.right = p;
+		p.parent = l;
+	}
+
+	/** From CLR **/
+	private void fixAfterInsertion(Entry x) {
+		x.color = Entry.RED;
+		while (x != null && x != root && x.parent.color == Entry.RED) {
+			if (parentOf(x) == leftOf(parentOf(parentOf(x)))) {
+				Entry y = rightOf(parentOf(parentOf(x)));
+				if (colorOf(y) == Entry.RED) {
+					setColor(parentOf(x), Entry.BLACK);
+					setColor(y, Entry.BLACK);
+					setColor(parentOf(parentOf(x)), Entry.RED);
+					x = parentOf(parentOf(x));
+				} else {
+					if (x == rightOf(parentOf(x))) {
+						x = parentOf(x);
+						rotateLeft(x);
+					}
+					setColor(parentOf(x), Entry.BLACK);
+					setColor(parentOf(parentOf(x)), Entry.RED);
+					if (parentOf(parentOf(x)) != null) {
+						rotateRight(parentOf(parentOf(x)));
+					}
+				}
+			} else {
+				Entry y = leftOf(parentOf(parentOf(x)));
+				if (colorOf(y) == Entry.RED) {
+					setColor(parentOf(x), Entry.BLACK);
+					setColor(y, Entry.BLACK);
+					setColor(parentOf(parentOf(x)), Entry.RED);
+					x = parentOf(parentOf(x));
+				} else {
+					if (x == leftOf(parentOf(x))) {
+						x = parentOf(x);
+						rotateRight(x);
+					}
+					setColor(parentOf(x), Entry.BLACK);
+					setColor(parentOf(parentOf(x)), Entry.RED);
+					if (parentOf(parentOf(x)) != null) {
+						rotateLeft(parentOf(parentOf(x)));
+					}
+				}
+			}
+		}
+		root.color = Entry.BLACK;
+	}
+
+	private void deleteEntry(Entry p) {
+		decrementSize();
+		// If strictly internal, first swap position with successor.
+		if (p.left != null && p.right != null) {
+			Entry s = successor(p);
+			swapPosition(s, p);
+		}
+		// Start fixup at replacement node, if it exists.
+		Entry replacement = (p.left != null ? p.left : p.right);
+		if (replacement != null) {
+			replacement.parent = p.parent;
+			if (p.parent == null) {
+				root = replacement;
+			} else {
+				if (p == p.parent.left) {
+					p.parent.left = replacement;
+				} else {
+					p.parent.right = replacement;
+				}
+			}
+			p.left = p.right = p.parent = null;
+			if (p.color == Entry.BLACK) {
+				fixAfterDeletion(replacement);
+			}
+		} else {
+			if (p.parent == null) {
+				root = null;
+			} else {
+				if (p.color == Entry.BLACK) {
+					fixAfterDeletion(p);
+				}
+				if (p.parent != null) {
+					if (p == p.parent.left) {
+						p.parent.left = null;
+					} else {
+						if (p == p.parent.right) {
+							p.parent.right = null;
+						}
+					}
+					p.parent = null;
+				}
+			}
+		}
+	}
+
+	/** From CLR **/
+	private void fixAfterDeletion(Entry x) {
+		while (x != root && colorOf(x) == Entry.BLACK) {
+			if (x == leftOf(parentOf(x))) {
+				Entry sib = rightOf(parentOf(x));
+				if (colorOf(sib) == Entry.RED) {
+					//assert false;
+					setColor(sib, Entry.BLACK);
+					setColor(parentOf(x), Entry.RED);
+					rotateLeft(parentOf(x));
+					sib = rightOf(parentOf(x));
+				}
+				if (colorOf(leftOf(sib)) == Entry.BLACK
+						&& colorOf(rightOf(sib)) == Entry.BLACK) {
+					setColor(sib, Entry.RED);
+					x = parentOf(x);
+				} else {
+					if (colorOf(rightOf(sib)) == Entry.BLACK) {
+						setColor(leftOf(sib), Entry.BLACK);
+						setColor(sib, Entry.RED);
+						rotateRight(sib);
+						sib = rightOf(parentOf(x));
+					}
+					setColor(sib, colorOf(parentOf(x)));
+					setColor(parentOf(x), Entry.BLACK);
+					setColor(rightOf(sib), Entry.BLACK);
+					rotateLeft(parentOf(x));
+					x = root;
+				}
+			} else { // symmetric
+				Entry sib = leftOf(parentOf(x));
+				if (colorOf(sib) == Entry.RED) {
+					setColor(sib, Entry.BLACK);
+					setColor(parentOf(x), Entry.RED);
+					rotateRight(parentOf(x));
+					sib = leftOf(parentOf(x));
+				}
+				if (colorOf(rightOf(sib)) == Entry.BLACK
+						&& colorOf(leftOf(sib)) == Entry.BLACK) {
+					setColor(sib, Entry.RED);
+					x = parentOf(x);
+				} else {
+					if (colorOf(leftOf(sib)) == Entry.BLACK) {
+						setColor(rightOf(sib), Entry.BLACK);
+						setColor(sib, Entry.RED);
+						rotateLeft(sib);
+						sib = leftOf(parentOf(x));
+					}
+					setColor(sib, colorOf(parentOf(x)));
+					setColor(parentOf(x), Entry.BLACK);
+					setColor(leftOf(sib), Entry.BLACK);
+					rotateRight(parentOf(x));
+					x = root;
+				}
+			}
+		}
+
+		setColor(x, Entry.BLACK);
+	}
+
+	/**
+	 * Swap the linkages of two nodes in a tree.
+	 */
+	private void swapPosition(Entry x, Entry y) {
+		// Save initial values.
+		Entry px = x.parent, lx = x.left, rx = x.right;
+		Entry py = y.parent, ly = y.left, ry = y.right;
+		boolean xWasLeftChild = px != null && x == px.left;
+		boolean yWasLeftChild = py != null && y == py.left;
+		//	System.out.println("Swap: "+x.key+" "+y.key);
+		// Swap, handling special cases of one being the other's parent.
+		if (x == py) { // x was y's parent
+			x.parent = y;
+			if (yWasLeftChild) {
+				y.left = x;
+				y.right = rx;
+			} else {
+				y.right = x;
+				y.left = lx;
+			}
+		} else {
+			x.parent = py;
+			if (py != null) {
+				if (yWasLeftChild) {
+					py.left = x;
+				} else {
+					py.right = x;
+				}
+			}
+			y.left = lx;
+			y.right = rx;
+		}
+		if (y == px) { // y was x's parent
+			y.parent = x;
+			if (xWasLeftChild) {
+				x.left = y;
+				x.right = ry;
+			} else {
+				x.right = y;
+				x.left = ly;
+			}
+		} else {
+			y.parent = px;
+			if (px != null) {
+				if (xWasLeftChild) {
+					px.left = y;
+				} else {
+					px.right = y;
+				}
+			}
+			x.left = ly;
+			x.right = ry;
+		}
+		// Fix children's parent pointers
+		if (x.left != null) {
+			x.left.parent = x;
+		}
+		if (x.right != null) {
+			x.right.parent = x;
+		}
+		if (y.left != null) {
+			y.left.parent = y;
+		}
+		if (y.right != null) {
+			y.right.parent = y;
+		}
+
+		// Swap colors
+		int c = x.color;
+		x.color = y.color;
+		y.color = c;
+		if (root == x) {
+			root = y;
+		} else {
+			if (root == y) {
+				root = x;
+			}
+		}
+	}
+	
+	
+	
+	public void dumpStructure(TreeMap root) {
+	}
+
+	public void countStructure(Entry root) {
+	}
+
+	
+	
+
+        private static int LIMIT = __SIZE__;
+
+
+	public static void main(String[] Argv) {
+		TreeMap tree = new TreeMap();
+		// tree = (TreeMap) Debug.makeSymbolicRef("tree", tree);
+                tree = (TreeMap) Debug.makeSymbolicRefBounded("tree", tree);
+
+		try {
+
+			if (tree != null){
+				int switchCtr = Debug.makeSymbolicInteger("switchCtr1");
+
+				if (switchCtr == 1) {
+					int cont = Debug.makeSymbolicInteger("cont1");
+					tree.containsKey(cont);
+				} else if (switchCtr == 2) {
+					tree.print();
+				} else if (switchCtr == 3) {
+					int put = Debug.makeSymbolicInteger("put1");
+					tree.put(put);
+				} else if (switchCtr == 4) {
+					int remove = Debug.makeSymbolicInteger("remove1");
+					tree.remove(remove);
+				} else {
+					tree.size();
+				}
+				
+				switchCtr = Debug.makeSymbolicInteger("switchCtr2");
+
+				if (switchCtr == 1) {
+					int cont = Debug.makeSymbolicInteger("cont2");
+					tree.containsKey(cont);
+				} else if (switchCtr == 2) {
+					tree.print();
+				} else if (switchCtr == 3) {
+					int put = Debug.makeSymbolicInteger("put2");
+					tree.put(put);
+				} else if (switchCtr == 4) {
+					int remove = Debug.makeSymbolicInteger("remove2");
+					tree.remove(remove);
+				} else {
+					tree.size();
+				}
+				
+				tree.countStructure(tree.root);
+			}
+							
+		} catch (Throwable t) {
+		}
+
+	}
+
+}
+

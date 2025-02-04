@@ -1,0 +1,7 @@
+#BST_0
+BST/BST_0/left/BST_1
+BST/BST_0/left/null
+BST/BST_0/right/BST_1
+BST/BST_0/right/null
+BST/BST_1/left/null
+BST/BST_1/right/null

@@ -1,0 +1,357 @@
+//
+// Copyright (C) 2007 United States Government as represented by the
+// Administrator of the National Aeronautics and Space Administration
+// (NASA).  All Rights Reserved.
+//
+// This software is distributed under the NASA Open Source Agreement
+// (NOSA), version 1.3.  The NOSA has been approved by the Open Source
+// Initiative.  See the file NOSA-1.3-JPF at the top of the distribution
+// directory tree for the complete NOSA document.
+//
+// THE SUBJECT SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY OF ANY
+// KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY, INCLUDING, BUT NOT
+// LIMITED TO, ANY WARRANTY THAT THE SUBJECT SOFTWARE WILL CONFORM TO
+// SPECIFICATIONS, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+// A PARTICULAR PURPOSE, OR FREEDOM FROM INFRINGEMENT, ANY WARRANTY THAT
+// THE SUBJECT SOFTWARE WILL BE ERROR FREE, OR ANY WARRANTY THAT
+// DOCUMENTATION, IF PROVIDED, WILL CONFORM TO THE SUBJECT SOFTWARE.
+//
+package gov.nasa.jpf.symbc.heap.bounded;
+
+import gov.nasa.jpf.Config;
+import gov.nasa.jpf.symbc.SymbolicInstructionFactoryBounded;
+import gov.nasa.jpf.symbc.bytecode.bounded.BoundedHelper;
+import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
+import gov.nasa.jpf.symbc.heap.HeapNode;
+import gov.nasa.jpf.symbc.numeric.PathCondition;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+
+import solvers.AuxSolverSAT4J;
+import solvers.AuxSolverMinisat;
+
+
+/**
+ * A heap choice generator that uses Bounded Lazy Initialization.
+ */
+public class HeapChoiceGeneratorBounded extends HeapChoiceGenerator {
+
+	//	protected PathCondition[] PCheap; // maintains constraints on the heap: one PC per choice
+	//    protected SymbolicInputHeapBounded [] symInputHeap; // maintains list of input symbolic nodes; one list per choice
+
+
+
+	/**
+	 * A static counter that is used to uniquely name the heap choice
+	 * generators.
+	 */
+	//	private static int counter = 0;
+
+	/**
+	 * The lazy initialization bounds database.
+	 */
+	private static BoundsMap bounds = null;
+
+	public static void setBounds(BoundsMap bm){
+		bounds = bm;
+	}
+
+	public static BoundsMap getBounds() {
+		return bounds;
+	}
+
+
+
+
+	/**
+	 * The name of the root node. There may be several "true" roots such as
+	 * Node0, Node1, Node2, but they are combined in a single bit set {1, 2, 3}.
+	 * They then represent all three possible roots simultaneously. If the heap
+	 * is refined, they will be resolved to a single name.
+	 */
+	private static BitSet rootsList = null;
+
+	public BitSet getRootsList(){
+		return rootsList;
+	}
+
+
+	/**
+	 * The heap choice generator uses the bounds to build a list of targets for
+	 * the choice for which is was created. These targets are either -1 (to
+	 * indicate the choice "null"), -2 (to indicate a brand new node), or some
+	 * value >= 0 that refers to the index of an existing node on the heap.
+	 */
+	//	protected final List<Integer> targetList;
+
+	/**
+	 * The name of a brand new node. If the target in {@link #targetList} is -2,
+	 * it means that the choice is a brand new node. The name (= bit set) of
+	 * this node is stored in this variable.
+	 */
+	//	protected BitSet newTarget;
+
+	/**
+	 * The number of choices this choice generator offers.
+	 */
+	//	protected int numberOfChoices;
+
+	/**
+	 * The currently selected choice. Just after the choice generator is
+	 * created, this value is -1, meaning that no choice has been selected so
+	 * far.
+	 */
+	protected int currentChoice;
+
+	private Integer[] intersectingIndices;
+
+	public Integer[] getIntersectingIndices(){
+		return intersectingIndices;
+	}
+
+	// The shared database of pvar mappings
+	private static Map<String, Integer> pvars = null;
+
+
+	// The shared sat-solver instance to check declarative invariants
+	//public static org.sat4j.specs.IProblem auxSolver = null;
+	public static solvers.AuxSolverMinisat auxSolver = null;
+	//public static AuxSolverMinisat auxSolver = null;
+
+	/**
+	 * Constructs a new heap choice generator that uses bounded lazy
+	 * initialization. It initializes all the variables, including the static
+	 * bounds map if this information has not yet been read from the database.
+	 * 
+	 * @param ss
+	 *            system state information, used to access the heap
+	 * @param config
+	 *            JPF configuration, used to read the database
+	 * @param classname
+	 *            the name of class for the choice
+	 * @param fieldname
+	 *            the name of the field for the choice
+	 * @param source
+	 *            the bit set that indicates the "source" object for the choice
+	 */
+
+
+
+
+
+
+	// sets the heap constraints for the current choice
+	public void setCurrentSymInputHeap(SymbolicInputHeapBounded ih) {
+		symInputHeap[getNextChoice()] = ih;
+
+	}
+
+
+
+
+
+	public HeapChoiceGeneratorBounded(int size, Config config, Integer[] intersectingIndices) {
+		super(size);	
+		this.intersectingIndices = intersectingIndices;
+		if (bounds == null) {
+			try {
+				setMap(config);
+			} catch (Exception e) {
+				bounds = null;
+				e.printStackTrace();
+			}
+		}
+		if (pvars == null && SymbolicInstructionFactoryBounded.useAuxSolver) {
+			try {
+				setPvarsMap(config);
+			} catch (Exception e) {
+				pvars = null;
+				e.printStackTrace();
+			}
+		}
+	}
+
+
+
+
+
+
+/**
+ * Returns the path condition associated with the current choice.
+ * 
+ * @return the current choice's path condition
+ */
+public PathCondition getCurrentPCheap() {
+	PathCondition pc;
+
+	pc = PCheap[getNextChoice()];
+	if (pc != null) {
+		return pc.make_copy();
+	} else {
+		return null;
+	}
+}
+
+/**
+ * Sets the path condition associated with the current choice.
+ * 
+ * @param nextChoice
+ *            the new path condition
+ */
+public void setCurrentPCheap(PathCondition pc) {
+	PCheap[getNextChoice()] = pc;
+}
+
+
+/**
+ * Reads the bounds from a text file and records them in the {@link #bounds}
+ * map. It also reads the list of potential roots and records them in the
+ * {@link #rootsList} variable.
+ * 
+ * @param config
+ *            the JPF configuration
+ * @throws Exception
+ *             if the bounds database is not found
+ */
+public static void setMap(Config config) throws Exception {
+	if (bounds != null) {
+		// previously initialized
+		return;
+	}
+	if (SymbolicInstructionFactoryBounded.lazyBoundDB != null) {
+		bounds = new BoundsMap();
+		rootsList = new BitSet();
+		BufferedReader reader = new BufferedReader(new FileReader(SymbolicInstructionFactoryBounded.lazyBoundDB));
+		String line = null;
+		while ((line = reader.readLine()) != null) {
+			if (line.startsWith("#")) {
+				int actualNodeIndexInSourceBound = BoundedHelper.extractNumber(line);
+				BitSet thisNodeActualBound = new BitSet();
+				thisNodeActualBound.set(actualNodeIndexInSourceBound);
+
+				rootsList.set(BoundedHelper.extractNumber(line));
+			} else {
+				if (line.startsWith("@")){
+					String backboneField = line.substring(1);
+					BoundedHelper.getBackbone().add(backboneField);
+				} else {
+					String[] fields = line.split("/");
+					assert (fields.length == 4);
+					int objectNr = BoundedHelper.extractNumber(fields[1]);
+					int targetNr = BoundedHelper.extractNumber(fields[3]);
+					bounds.addBound(fields[0], fields[2], objectNr, targetNr);
+				}	
+			}
+		}
+		reader.close();
+	} else {
+		throw new Exception("No bounds database found");
+	}
+}
+
+private static void setPvarsMap(Config config) throws Exception {
+	if (pvars != null) {
+		return;
+	}
+	if (SymbolicInstructionFactoryBounded.pvarsDB != null) {
+		pvars = new HashMap<String, Integer>();
+		BufferedReader reader = new BufferedReader(new FileReader(SymbolicInstructionFactoryBounded.pvarsDB));
+		String line = null;
+		while ((line = reader.readLine()) != null) {
+			if (line.length() > 0) {
+				String[] fields = line.split("/");
+				assert (fields.length == 5);
+				String key;
+				int src = BoundedHelper.extractNumber(fields[1]);
+				if (fields[3].equals("null")) {
+					key = "{" + src + "}/" + fields[2] + "/null";
+				} else {
+					int dst = BoundedHelper.extractNumber(fields[3]);
+					key = "{" + src + "}/" + fields[2] + "/{" + dst + "}";
+				}
+				Integer value = Integer.parseInt(fields[4]);
+				assert (!pvars.containsKey(key));
+				pvars.put(key, value);
+			}
+		}
+		reader.close();
+
+		if (SymbolicInstructionFactoryBounded.useAuxSolver && auxSolver == null) {
+			assert (SymbolicInstructionFactoryBounded.pvarsDB != null) : "useauxsolver is true but no pvarsDB given";
+			// For now, by convention, we extrapolate the CNF pathname from
+			// the pvarsDB pathname
+			String cnfPath = SymbolicInstructionFactoryBounded.pvarsDB.replace(".pvars", ".cnf");
+
+			// Old version using SAT4J directly:
+			//org.sat4j.specs.ISolver solver = org.sat4j.minisat.SolverFactory.newLight();
+			//org.sat4j.reader.Reader dimacsReader = new org.sat4j.reader.DimacsReader(solver);
+			//auxSolver = dimacsReader.parseInstance(cnfPath);
+
+			// New version using AuxSolverMinisat or AuxSolverSAT4J:
+			//System.out.println("Creating auxSolver (solvers.AuxSolverSAT4J)");
+			//auxSolver = new AuxSolverSAT4J();
+			System.out.println("Creating auxSolver (solvers.AuxSolverSAT4J)");
+			auxSolver = new AuxSolverMinisat();
+			//				auxSolver = new AuxSolverSAT4J();
+			System.out.println("Parsing DIMACS from: " + cnfPath);
+			auxSolver.read(cnfPath);
+			System.out.println("Done parsing DIMACS.");
+		}
+	} else {
+		throw new Exception("No pvars database found");
+	}
+}
+
+public static int getPvarFor(String src, String field, String dst) {
+	String key = src + "/" + field + "/" + dst;
+	if (pvars != null && pvars.containsKey(key)) {
+		return pvars.get(key);
+	} else {
+		return -1;
+		//			throw new RuntimeException(key + " was not found in pvars database");
+	}
+}
+
+
+
+/**
+ * Returns the bit set that represents all potential roots.
+ * 
+ * @return the root bit set
+ */
+public static BitSet getRootName() {
+	return rootsList;
+}
+
+
+
+public HeapNode getNodeByIndexAll(Integer index){
+	SymbolicInputHeapBounded[] sihbs = (SymbolicInputHeapBounded[])symInputHeap;
+	int i = 0;
+	while (i < sihbs.length && sihbs[i].getNodeByIndex(index) == null){
+		i++;
+	}
+	if (i<sihbs.length)
+		return sihbs[i].getNodeByIndex(index);
+	else
+		return null;
+}
+
+
+public SymbolicInputHeapBounded getCurrentSymInputHeap() {
+	SymbolicInputHeapBounded ih;
+
+	ih = (SymbolicInputHeapBounded)symInputHeap[getNextChoice()];
+	if (ih != null) {
+		return ih.make_copy();
+	} else {
+		return null;
+	}
+}
+
+
+}

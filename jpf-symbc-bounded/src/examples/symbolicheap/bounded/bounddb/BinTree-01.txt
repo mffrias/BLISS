@@ -1,0 +1,5 @@
+#BinTree_0
+@left
+@right
+BinTree/BinTree_0/left/null
+BinTree/BinTree_0/right/null

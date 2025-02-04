@@ -1,0 +1,759 @@
+package symbolicheap.bounded;
+
+import java.util.LinkedList;
+
+import gov.nasa.jpf.symbc.DebugBounded;
+
+public class BinHeap {
+
+	public int key;
+	public int degree; // depth of the binomial tree having the current node as its root
+	public BinHeap parent;  // pointer to the parent of the current node
+	public BinHeap sibling;   // pointer to the first child of the current node
+	public BinHeap child; // pointer to the next sibling binomial tree
+	public static int size = 0;
+
+	//	public BinHeap() {
+	//		this.key = key;
+	//		this.degree = degree;
+	//		parent = sibling = child = null;
+	//	}
+
+	public BinHeap(){}
+
+	public static final BinHeap SYMBOLICBINHEAP = new BinHeap(); //field added to execute the hybridRepOK.
+	public static final int SYMBOLICINT = (int) Integer.MIN_VALUE; //field added to execute the hybridRepOK.
+
+
+
+	public boolean repOK_Concrete(BinHeap root) {
+
+		final LinkedList<BinHeap> seen = new LinkedList<BinHeap>();
+		if (root!=null) {
+
+			// son aciclicos los hijos de root?
+			if (!isAcyclic(root, seen)){
+				return false;
+			}	
+			// esta ordenado el arbol que cuelga de root?
+			if (!ordered(root)){
+				return false;
+			}
+
+			// el parent de root es null?
+			if (root.parent!=null){
+				return false;
+			}
+			// si hay un root.sibling, el degree de root es menor
+			if (root.sibling!=null) {
+				if (root.degree >= root.sibling.degree){
+					return false;
+				}	
+			}
+
+			// los ns son los siblings de root
+			BinHeap ns = root.sibling;
+
+			while (ns != null) {
+
+				// son aciclicos los hijos del sibling de root
+				if (!isAcyclic(ns, seen)){
+					return false;
+				}
+				// el parent del sibling es root?
+				if (ns.parent!=null){
+					return false;
+				}
+				// el degree de este sibling es menor al del siguiente?
+				if (ns.sibling!=null) {
+					if (ns.degree>=ns.sibling.degree){
+						return false;
+					}	
+				}
+
+				// estan ordenados el subarbol que cuelga de este sibling?
+				if (!ordered(ns)){
+					return false;
+				}
+
+				// proximo sibling de root
+				ns = ns.sibling;
+			}
+
+		}
+
+		return size == seen.size() && size <= LIMIT;
+		
+	}
+
+
+
+	public boolean repOK_ConcretePost(BinHeap root) {
+
+		final LinkedList<BinHeap> seen = new LinkedList<BinHeap>();
+
+		if (root!=null) {
+
+			// son aciclicos los hijos de root?
+			if (!isAcyclic(root, seen)){
+				return false;
+			}
+				
+			// esta ordenado el arbol que cuelga de root?
+			if (!ordered(root)){
+				return false;
+			}
+
+			// el parent de root es null?
+			if (root.parent!=null){
+				return false;
+			}	
+
+			// si hay un root.sibling, el degree de root es menor
+			if (root.sibling!=null) {
+				if (root.degree >= root.sibling.degree){
+					return false;
+				}
+			}
+
+			// los ns son los siblings de root
+			BinHeap ns = root.sibling;
+
+			while (ns != null) {
+
+				// son aciclicos los hijos del sibling de root
+				if (!isAcyclic(ns, seen)){
+					return false;
+				}
+
+				// el parent del sibling de root es null?
+				if (ns.parent!=null){
+					return false;
+				}
+
+				// el degree de este sibling es menor al del siguiente?
+				if (ns.sibling!=null) {
+					if (ns.degree>=ns.sibling.degree){
+						return false;
+					}
+				}
+
+				// estan ordenados el subarbol que cuelga de este sibling?
+				if (!ordered(ns)){
+					return false;
+				}
+
+				// proximo sibling de root
+				ns = ns.sibling;
+			}
+
+		}
+		
+		return size == seen.size();
+	}
+
+
+	public boolean hybridRepOK() {
+		BinHeap root = this;
+
+		final LinkedList<BinHeap> seen = new LinkedList<BinHeap>();
+
+		if (root != SYMBOLICBINHEAP && root!=null) {
+
+			// son aciclicos los hijos de root?
+			if (!acyclic_hybrid(root, seen))
+				return false;
+
+			// esta ordenado el arbol que cuelga de root?
+			if (!ordered_hybrid(root))
+				return false;
+
+			// el parent de root es null?
+			if (root.parent != SYMBOLICBINHEAP && root.parent!=null)
+				return false;
+
+			// si hay un root.sibling, el degree de root es menor
+			if (root.sibling != SYMBOLICBINHEAP && root.sibling!=null) {
+				if (root.degree != SYMBOLICINT && root.sibling.degree != SYMBOLICINT && root.degree >= root.sibling.degree)
+					return false;
+			}
+
+			// los ns son los siblings de root
+			BinHeap ns = root.sibling;
+
+			while (ns != null && ns != SYMBOLICBINHEAP) {
+
+				// son aciclicos los hijos del sibling de root
+				if (!acyclic_hybrid(ns, seen))
+					return false;
+
+				// es parent del sibling de root es null?
+				if (ns.parent!=SYMBOLICBINHEAP && ns.parent!=null)
+					return false;
+
+				// el degree de este sibling es menor al del siguiente?
+				if (ns.sibling!=SYMBOLICBINHEAP && ns.sibling!=null) {
+					if (ns.degree != SYMBOLICINT && ns.sibling.degree != SYMBOLICINT && ns.degree>=ns.sibling.degree)
+						return false;
+				}
+
+				// estan ordenados el subarbol que cuelga de este sibling?
+				if (!ordered_hybrid(ns))
+					return false;
+
+				// proximo sibling de root
+				ns = ns.sibling;
+			}
+		}
+		return true;
+	}
+
+
+
+
+	/**
+	 * retorna true si es aciclico el subarbol y de paso
+	 *    - verifica que parent este bien formado
+	 *    - chequea que degree sea positivo
+	 *    - que key sea non_null (si key es Object)
+	 *    - que degree sea la cantidad de hijos (no descendientes) del nodo
+	 */
+	public static boolean isAcyclic(final BinHeap start, final LinkedList<BinHeap> seen) {
+		if (seen.contains(start)){
+			return false;
+		}
+		if (start.degree<0){
+			return false;
+		}
+
+		// enable these lines if key is instance of Object
+		//if (start.key==null)
+		//	 return false;
+
+		seen.add(start);
+
+		BinHeap currchild = start.child;
+
+		int child_count = 0;
+
+		while (currchild!=null) {
+			child_count++;
+
+			if (currchild.parent != start){
+				return false;
+			}
+			if (!isAcyclic(currchild, seen)){
+				return false;
+			}
+			if (currchild.sibling!=null) {
+				if (currchild.degree<=currchild.sibling.degree){
+					return false;
+				}
+			}
+			currchild = currchild.sibling;
+		}
+
+		if (start.degree!=child_count){
+			return false;
+		}
+
+		if (start.child!=null) {
+			int tam_child=1;
+			if (start.child.child!=null) {
+				BinHeap curr = start.child.child;
+				while (curr!=null) {
+					tam_child+= count_nodes(start.child.child);
+					curr = curr.sibling;
+				}
+			}
+
+			int tam_sibling=1;
+			if (start.child.sibling!=null) {
+				BinHeap curr = start.child.sibling;
+				while (curr!=null) {
+					tam_sibling+= count_nodes(start.child.sibling);
+					curr = curr.sibling;
+				}
+			}
+
+			if (tam_child!=tam_sibling){
+				return false;
+			}
+		}
+		return true;	
+	}
+
+
+
+
+
+
+
+
+
+
+	/**
+	 * retorna true si es aciclico el subarbol y de paso
+	 *    - verifica que parent este bien formado
+	 *    - chequea que degree sea positivo
+	 *    - que key sea non_null (si key es Object)
+	 *    - que degree sea la cantidad de hijos (no descendientes) del nodo
+	 */
+	public static boolean acyclic_hybrid(final BinHeap start, final LinkedList<BinHeap> seen) {
+		if (start != SYMBOLICBINHEAP){
+
+			if (seen.contains(start))
+				return false;
+
+			if (start.degree != SYMBOLICINT && start.degree<0)
+				return false;
+
+			// enable these lines if key is instance of Object
+			//if (start.key==null)
+			//	 return false;
+
+			seen.add(start);
+
+			BinHeap child = start.child;
+
+			int child_count = 0;
+
+			while (child!=null && child!=SYMBOLICBINHEAP) {
+
+				child_count++;
+
+				if (child.parent != SYMBOLICBINHEAP && child.parent != start)
+					return false;
+
+				if (!acyclic_hybrid(child, seen))
+					return false;
+
+				if (child.sibling != SYMBOLICBINHEAP && child.sibling!=null) {
+					if (child.degree != SYMBOLICINT && child.sibling.degree != SYMBOLICINT && child.degree<=child.sibling.degree)
+						return false;
+				}
+				child = child.sibling;
+			}
+			
+			if (child == SYMBOLICBINHEAP){
+				return true;
+			}
+
+
+			if (start.degree != SYMBOLICINT && start.degree!=child_count)
+				return false;
+
+			if (start.child != SYMBOLICBINHEAP && start.child!=null) {
+				int tam_child=1;
+				if (start.child.child!=SYMBOLICBINHEAP && start.child.child!=null) {
+					BinHeap curr = start.child.child;
+					while (curr != SYMBOLICBINHEAP && curr!=null) {
+						tam_child+= count_nodes_hybrid(start.child.child);
+						curr = curr.sibling;
+					}
+				}
+
+				int tam_sibling=1;
+				if (start.child.sibling!=SYMBOLICBINHEAP && start.child.sibling!=null) {
+					BinHeap curr = start.child.sibling;
+					while (curr!=null) {
+						tam_sibling+= count_nodes_hybrid(start.child.sibling);
+						curr = curr.sibling;
+					}
+				}
+
+				if (tam_child!=SYMBOLICINT && tam_sibling!=SYMBOLICINT && tam_child!=tam_sibling)
+					return false;
+
+			}
+
+		}	 
+		return true;
+	}
+
+
+
+	private static int count_nodes_hybrid(BinHeap start) {
+
+		int node_count = 1;
+		BinHeap child = start.child;
+		while (child != SYMBOLICBINHEAP && child != null) {	
+			if (node_count != SYMBOLICINT){
+				node_count += count_nodes_hybrid(child);
+			} else {
+				return SYMBOLICINT;
+			}
+			child=child.sibling;
+		}
+		if (child != null)
+			return SYMBOLICINT;
+		else
+			return node_count;
+	}
+
+
+
+	private static int count_nodes(BinHeap start) {
+
+		int node_count = 1;
+		BinHeap child = start.child;
+		while (child!=null) {	
+			node_count += count_nodes(child);
+			child=child.sibling;
+		}
+		return node_count;
+	}
+
+
+
+	private static boolean ordered_hybrid(final BinHeap node) {
+		if (node.child != null && node.child != SYMBOLICBINHEAP) {
+			if (node.key != SYMBOLICINT && node.child.key!=SYMBOLICINT && node.child.key < node.key) {
+				return false;
+			}
+			if (node.child!=SYMBOLICBINHEAP && !ordered_hybrid(node.child)) {
+				return false;
+			}
+			for (BinHeap ns = node.child.sibling; ns != null && ns != SYMBOLICBINHEAP; ns = ns.sibling) {
+				if (ns.key!=SYMBOLICINT && node.key != SYMBOLICINT && ns.key < node.key) {
+					return false;
+				}
+				if (!ordered_hybrid(ns)) {
+					return false;
+				}
+			}
+			return true;
+		} 	 
+		return true;
+	}
+
+
+
+	private static boolean ordered(final BinHeap node) {
+		if (node.child != null) {
+			if (node.child.key < node.key) {
+				return false;
+			}
+			if (!ordered(node.child)) {
+				return false;
+			}
+			for (BinHeap ns = node.child.sibling; ns != null; ns = ns.sibling) {
+				if (ns.key < node.key) {
+					return false;
+				}
+				if (!ordered(ns)) {
+					return false;
+				}
+			}
+			return true;
+		} 	 
+		return true;
+	}
+
+
+
+	//modified version of extract min. returns the new root to 
+	//the heap obtained after removing the min node.
+	// must be invoked as Nodes = Nodes.extractMin(Nodes)
+	public BinHeap extractMin(BinHeap Nodes) {
+
+		if (Nodes == null) 
+			return null;
+
+		//		int old_size = size;
+
+		BinHeap temp = Nodes, prevTemp = null;
+		BinHeap minNode = Nodes.findMinNode_extractMin(Nodes);
+		while (temp.key != minNode.key) {
+			prevTemp = temp;
+			temp = temp.sibling;
+		}
+
+		if (prevTemp == null) {
+			Nodes = temp.sibling;
+		} else {
+			prevTemp.sibling = temp.sibling;
+		}
+		temp = temp.child;
+		BinHeap fakeNode = temp;
+		while (temp != null) {
+			temp.parent = null;
+			temp = temp.sibling;
+		}
+
+		if ((Nodes == null) && (fakeNode == null)) {
+			size = 0;
+		} else {
+			if ((Nodes == null) && (fakeNode != null)) {
+				Nodes = fakeNode.reverse(null);
+				size--;
+			} else {
+				if ((Nodes != null) && (fakeNode == null)) {
+					size--;
+				} else {
+					Nodes = Nodes.unionNodes_extractMin(fakeNode.reverse(null), Nodes);
+					size--;
+				}
+			}
+		}
+
+//		if (size==12) {
+//			System.out.println("Size 12 structure reached.");
+//		}
+
+		return Nodes;
+	}
+
+
+	public BinHeap reverse(BinHeap sibl) {
+		BinHeap ret;
+		if (sibling != null)
+			ret = sibling.reverse(this);
+		else
+			ret = this;
+		sibling = sibl;
+		return ret;
+	}
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public static void dumpHeap(BinHeap root) {
+		System.out.println("");
+		System.out.println("");
+		dumpHeap(root, 0, "");
+		System.out.println("");
+		System.out.println("");
+	}
+
+	private static void dumpHeap(BinHeap root, int level, String str) {
+		if(root == null)
+			return;
+		if(level != 0){
+			for(int i = 0; i < level - 1; i++)
+				System.out.print("\t");
+//			System.out.println("|-------" + root.element);
+			System.out.println("|---" + str + "----" + root.hashCode());
+		}
+		else
+//			System.out.println(root.element);
+			System.out.println(root.hashCode());
+		dumpHeap(root.sibling, level+1, "sibling");
+		dumpHeap(root.child, level+1, "child");
+
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	private BinHeap unionNodes_extractMin(BinHeap binHeap, BinHeap Nodes) {
+		
+		Nodes = Nodes.merge_extractMin(binHeap, Nodes);
+
+		BinHeap prevTemp = null, temp = Nodes , nextTemp = Nodes.sibling;
+
+		while (nextTemp != null) {
+			if ((temp.degree != nextTemp.degree)
+					|| ((nextTemp.sibling != null) && (nextTemp.sibling.degree == temp.degree))) {
+				prevTemp = temp;
+				temp = nextTemp;
+			} else {
+				if (temp.key <= nextTemp.key) {
+					temp.sibling = nextTemp.sibling;
+					nextTemp.parent = temp;
+					nextTemp.sibling = temp.child;
+					temp.child = nextTemp;
+					temp.degree++;
+				} else {
+					if (prevTemp == null) {
+						Nodes = nextTemp;
+					} else {
+						prevTemp.sibling = nextTemp;
+					}
+					temp.parent = nextTemp;
+					temp.sibling = nextTemp.child;
+					nextTemp.child = temp;
+					nextTemp.degree++;
+					temp = nextTemp;
+				}
+			}
+
+			nextTemp = temp.sibling;
+		}		
+		return Nodes;
+	}
+
+
+	private BinHeap merge_extractMin(BinHeap binHeap, BinHeap Nodes) {
+		BinHeap temp1 = Nodes, temp2 = binHeap;
+		while ((temp1 != null) && (temp2 != null)) {
+			if (temp1.degree == temp2.degree) {
+				BinHeap tmp = temp2;
+				temp2 = temp2.sibling;
+				tmp.sibling = temp1.sibling;
+				temp1.sibling = tmp;
+				temp1 = tmp.sibling;
+			} else {
+				if (temp1.degree < temp2.degree) {
+					if ((temp1.sibling == null)
+							|| (temp1.sibling.degree > temp2.degree)) {
+						BinHeap tmp = temp2;
+						temp2 = temp2.sibling;
+						tmp.sibling = temp1.sibling;
+						temp1.sibling = tmp;
+						temp1 = tmp.sibling;
+					} else {
+						temp1 = temp1.sibling;
+					}
+				} else {
+					BinHeap tmp = temp1;
+					temp1 = temp2;
+					temp2 = temp2.sibling;
+					temp1.sibling = tmp;
+					if (tmp == Nodes) {
+						Nodes = temp1;
+					} 
+				}
+			}
+		}
+
+		if (temp1 == null) {
+			temp1 = Nodes;
+			while (temp1.sibling != null) {
+				temp1 = temp1.sibling;
+			}
+			temp1.sibling = temp2;
+		} 
+
+		return Nodes;
+
+	}
+
+
+	public BinHeap findMinNode_extractMin(BinHeap arg) {
+		BinHeap x = arg, y = arg;
+		int min = arg.key;
+
+		while (x != null) {
+
+			if (x.key < min) {
+				y = x;
+				min = x.key;
+			}
+			x = x.sibling;
+		}
+
+		return y;
+	}
+
+	public void dumpStructure(BinHeap root) {
+	}
+
+	public void countStructure(BinHeap root) {
+	}
+
+
+	private static final int LIMIT = 13;
+	public static void main(String[] args) {
+		BinHeap X = new BinHeap();
+//		X = (BinHeap) DebugBounded.makeSymbolicRefBounded("X", X);
+		X = (BinHeap) DebugBounded.makeSymbolicRef("X", X);
+		//		int key = 1000;
+		
+//		BinHeap N1 = new BinHeap();
+//		BinHeap N2 = new BinHeap();
+//		
+//		X.sibling = N1;
+//		N1.sibling = null;
+//		X.child = null;
+//		N1.child = N2;
+//		N1.degree = 1;
+//		N2.parent = N1;
+//		size = 3;
+//		X.key = 1;
+//		N1.key = 10;
+//		N2.key = 20;
+		if (X != null && X.repOK_Concrete(X)) {			
+			X = X.extractMin(X);
+			if (X != null)
+				X.countStructure(X);
+			if (X != null && !X.repOK_ConcretePost(X)){				
+				BinHeap.dumpHeap(X);
+				X.dumpStructure(X);
+				if (size >= 12){
+					System.out.println("This is a good candidate");
+				}
+			}
+		} 	
+	}
+
+
+//	private static final int LIMIT = 8;
+//
+//	public static void main(String[] args) {
+//		BinHeap X = new BinHeap();
+//		//		X = (BinHeap) Debug.makeSymbolicRefBounded("X", X);
+//		X = (BinHeap) Debug.makeSymbolicRef("X", X);
+//		try {
+//			if (X != null){
+//				BinHeap b = X.findMinNode_extractMin(X);
+//				X.countStructure(X);
+//			}	
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//
+//	}
+
+
+//	private static final int LIMIT = 8;
+//	public static void main(String[] args) {
+//		BinHeap b0 = new BinHeap();
+//		BinHeap b1 = new BinHeap();
+//		BinHeap b2 = new BinHeap();
+//		BinHeap b3 = new BinHeap();
+//		b0.child = b1;
+//		b0.sibling = null;
+//		b0.parent = null;
+//		b0.key = 0;
+//		b0.degree = 2;
+//		b1.child = b2;
+//		b1.sibling = b3;
+//		b1.parent = b0;
+//		b1.key = 5;
+//		b1.degree = 1;
+//		b2.child = null;
+//		b2.sibling = null;
+//		b2.parent = b1;
+//		b2.key = 10;
+//		b2.degree = 0;
+//		b3.child = null;
+//		b3.sibling = null;
+//		b3.parent = b0;
+//		b3.key = 7;
+//		b3.degree = 0;
+//
+//		if (b0.repOK_Concrete(b0)){
+//			System.out.println("vale");
+//		} else {
+//			System.out.println("No vale");
+//		}
+//		
+//	}
+//	
+}
+

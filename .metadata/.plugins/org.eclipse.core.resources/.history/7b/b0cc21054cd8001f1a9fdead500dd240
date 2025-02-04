@@ -1,0 +1,373 @@
+//
+// Copyright (C) 2006 United States Government as represented by the
+// Administrator of the National Aeronautics and Space Administration
+// (NASA).  All Rights Reserved.
+//
+// This software is distributed under the NASA Open Source Agreement
+// (NOSA), version 1.3.  The NOSA has been approved by the Open Source
+// Initiative.  See the file NOSA-1.3-JPF at the top of the distribution
+// directory tree for the complete NOSA document.
+//
+// THE SUBJECT SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY OF ANY
+// KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY, INCLUDING, BUT NOT
+// LIMITED TO, ANY WARRANTY THAT THE SUBJECT SOFTWARE WILL CONFORM TO
+// SPECIFICATIONS, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+// A PARTICULAR PURPOSE, OR FREEDOM FROM INFRINGEMENT, ANY WARRANTY THAT
+// THE SUBJECT SOFTWARE WILL BE ERROR FREE, OR ANY WARRANTY THAT
+// DOCUMENTATION, IF PROVIDED, WILL CONFORM TO THE SUBJECT SOFTWARE.
+//
+package gov.nasa.jpf.symbc.bytecode.bounded;
+
+
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
+import gov.nasa.jpf.Config;
+import gov.nasa.jpf.vm.ChoiceGenerator;
+import gov.nasa.jpf.vm.ClassInfo;
+import gov.nasa.jpf.vm.ElementInfo;
+import gov.nasa.jpf.vm.FieldInfo;
+import gov.nasa.jpf.vm.KernelState;
+import gov.nasa.jpf.vm.MJIEnv;
+import gov.nasa.jpf.vm.StackFrame;
+import gov.nasa.jpf.vm.SystemState;
+import gov.nasa.jpf.vm.ThreadInfo;
+import gov.nasa.jpf.vm.Instruction;
+import gov.nasa.jpf.symbc.bytecode.bounded.BoundedHelper;
+import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
+import gov.nasa.jpf.symbc.heap.HeapNode;
+import gov.nasa.jpf.symbc.heap.Helper;
+import gov.nasa.jpf.symbc.heap.SymbolicInputHeap;
+import gov.nasa.jpf.symbc.heap.bounded.BoundsMap;
+import gov.nasa.jpf.symbc.heap.bounded.HeapChoiceGeneratorBounded;
+import gov.nasa.jpf.symbc.heap.bounded.HeapSymbolicListenerBounded3;
+import gov.nasa.jpf.symbc.heap.bounded.SymbolicInputHeapBounded;
+import gov.nasa.jpf.symbc.numeric.Comparator;
+import gov.nasa.jpf.symbc.numeric.IntegerConstant;
+import gov.nasa.jpf.symbc.numeric.PathCondition;
+import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
+import gov.nasa.jpf.symbc.string.StringExpression;
+import gov.nasa.jpf.symbc.string.SymbolicStringBuilder;
+//import gov.nasa.jpf.symbc.uberlazy.TypeHierarchy;
+
+public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
+
+	public GETFIELDBounded(String fieldName, String clsName, 
+			String fieldDescriptor){
+		super(fieldName, clsName, fieldDescriptor);
+	}
+
+	// private int numNewRefs = 0; // # of new reference objects to account for polymorphism -- work of Neha Rungta -- needs to be updated
+
+	boolean abstractClass = false;
+
+
+	public static int numInvocation = 0;
+
+
+	@Override
+	public Instruction execute (ThreadInfo ti) {
+		/**
+		 * prevSymRefs must contain the number of nodes of the same type
+		 * whose labelset intersects source.field 
+		 */
+		numInvocation++;
+
+		HeapNode[] prevSymRefs = null; 
+		int numSymRefs = 0; // # of prev. initialized objects
+		HeapChoiceGeneratorBounded prevHeapCG = null;
+		Integer[] prevIntersectingIndices = null;
+
+		//	  System.out.println("Entrada al getfield standard");
+		Config conf = ti.getVM().getConfig();
+		String[] lazy = conf.getStringArray("symbolic.lazy");
+		if (lazy == null || !lazy[0].equalsIgnoreCase("true")){
+			return super.execute(ti);
+		}
+
+		int limit = conf.getInt("symbolic.lazy.limit", 999999);
+
+		String[] bounded = conf.getStringArray("symbolic.bounded");
+
+		if (bounded == null || !bounded[0].equalsIgnoreCase("true")){
+			return super.execute(ti);
+		} 
+
+
+		//TODO: fix: polymorphism and subtypes
+		//	  String subtypes = conf.getString("symbolic.lazy.subtypes", "false");
+		//	  if(!subtypes.equals("false") &&
+		//			  TypeHierarchy.typeHierarchies == null) {
+		//		  TypeHierarchy.buildTypeHierarchy(ti);
+		//	  }
+
+
+		StackFrame frame = ti.getModifiableTopFrame();
+		int objRef = frame.peek(); // don't pop yet, we might re-enter
+		lastThis = objRef;
+		if (objRef == MJIEnv.NULL) {
+			return ti.createAndThrowException("java.lang.NullPointerException",
+					"referencing field '" + fname + "' on null object");
+		}
+
+
+		ElementInfo ei = ti.getModifiableElementInfo(objRef); //getModifiableElementInfoWithUpdatedSharedness(objRef); POR broken
+		FieldInfo fi = getFieldInfo();
+		if (fi == null) {
+			return ti.createAndThrowException("java.lang.NoSuchFieldError",
+					"referencing field '" + fname + "' in " + ei);
+		}
+
+
+		//	    if (isNewPorFieldBoundary(ti, fi, objRef)) {
+		//			if (createAndSetFieldCG(ss, ei, ti)) {
+		//				return this;
+		//			}
+		//		}
+
+
+		Object attr = ei.getFieldAttr(fi);
+		// check if the field is of ref type & it is symbolic (i.e. it has an attribute)
+		// if it is we need to do lazy initialization
+
+		if (!(fi.isReference() && attr != null)) {
+			return super.execute(ti);
+		}
+
+		//		if(attr instanceof StringExpression || attr instanceof SymbolicStringBuilder)
+		//			return super.execute(ss,ks,ti); // Strings are handled specially
+
+		// else: lazy initialization
+
+		int currentChoice;
+		HeapChoiceGeneratorBounded thisHeapCG;
+
+		ClassInfo typeClassInfo = fi.getTypeClassInfo(); // use this instead of fullType
+
+		// first time around, get previous heapCG (if any) size so we know
+		// how big to make this heapCG
+		// we do not collect now  the candidates for lazy initialization
+		if (!ti.isFirstStepInsn()) {
+			prevSymRefs = null;
+			numSymRefs = 0;
+
+			prevHeapCG = ti.getVM().getSystemState().getLastChoiceGeneratorOfType(HeapChoiceGeneratorBounded.class);
+
+
+			if (prevHeapCG != null) {
+				// determine # of candidates for lazy initialization
+				SymbolicInputHeapBounded symInputHeap = prevHeapCG.getCurrentSymInputHeap();
+				HeapNode hnb = symInputHeap.getNodeByIndex(objRef);
+				BoundsMap bounds = HeapChoiceGeneratorBounded.getBounds();
+				prevIntersectingIndices = symInputHeap.getIndicesForIntersectingNodesOfType(typeClassInfo, hnb, fi.getName(), bounds);
+				numSymRefs = prevIntersectingIndices.length;
+			}
+
+			int increment = 2;
+			if(typeClassInfo.isAbstract()) {
+				abstractClass = true;
+				increment = 1; // only null
+			}
+			//TODO: fix subtypes
+			//		  if(!subtypes.equals("false")) {
+			//			  // get the number of subtypes that exist, and add the number in
+			//			  // the choice generator inaddition to the ones that were there
+			//			  int numNewRefs = TypeHierarchy.getNumOfElements(typeClassInfo.getName());
+			//			  thisHeapCG = new HeapChoiceGenerator(numSymRefs+increment+numNewRefs); // +null, (no new)
+			//		  } else {
+
+			//			imprimirArreglo(prevIntersectingIndices);
+
+
+			thisHeapCG = new HeapChoiceGeneratorBounded(numSymRefs+increment, conf, prevIntersectingIndices);  //+null,new
+			//			System.out.println(numSymRefs+increment);
+			//		  }
+			ti.getVM().getSystemState().setNextChoiceGenerator(thisHeapCG);
+
+			return this;
+		}
+		else {//this is what really returns results
+
+			//from original GETFIELD bytecode
+			frame.pop();  // Ok, now we can remove the object ref from the stack
+
+			thisHeapCG = (HeapChoiceGeneratorBounded) ti.getVM().getSystemState().getLastChoiceGeneratorOfType(HeapChoiceGenerator.class);
+			assert (thisHeapCG instanceof HeapChoiceGeneratorBounded) :
+				"expected HeapChoiceGeneratorBounded, got: " + thisHeapCG;
+			currentChoice = ((HeapChoiceGeneratorBounded) thisHeapCG).getNextChoice();
+		}
+
+		PathCondition pcHeap; //this pc contains only the constraints on the heap
+		SymbolicInputHeapBounded symInputHeap;
+
+		// depending on the currentChoice, we set the current field to an object that was already created
+		// 0 .. numymRefs -1, or to null or to a new object of the respective type, where we set all its
+		// fields to be symbolic
+
+
+		// pcHeap is updated with the pcHeap stored in the choice generator above
+		// get the pcHeap from the previous choice generator of the same type
+		// can not simply re-use prevHeapCG from above because it might have changed during re-execution
+		// bug reported by Willem Visser
+		prevHeapCG = thisHeapCG.getPreviousChoiceGeneratorOfType(HeapChoiceGeneratorBounded.class);
+
+
+		if (prevHeapCG == null){ 
+			pcHeap = new PathCondition();
+			symInputHeap = new SymbolicInputHeapBounded();
+		}
+		else {
+			pcHeap = ((HeapChoiceGeneratorBounded)prevHeapCG).getCurrentPCheap();
+			if (pcHeap != null)
+				System.out.println(pcHeap.stringPC());
+			symInputHeap = ((HeapChoiceGeneratorBounded)prevHeapCG).getCurrentSymInputHeap();
+		}
+
+
+
+
+
+		assert pcHeap != null;
+		assert symInputHeap != null;
+
+		HeapNode hnb = symInputHeap.getNodeByIndex(objRef);
+		ClassInfo sourceType = hnb.getType();
+		BoundsMap bounds = HeapChoiceGeneratorBounded.getBounds();
+
+		//		prevSymRefs = symInputHeap.getIntersectingNodesOfType(typeClassInfo, hnb, fi.getName(), bounds);
+
+		numSymRefs = thisHeapCG.getIntersectingIndices().length;
+
+
+
+		int daIndex = 0; //index into JPF's dynamic area
+		if (currentChoice < numSymRefs){
+			Integer currentIndexForPreviosulyIntersectingNode = thisHeapCG.getIntersectingIndices()[currentChoice];
+			BitSet mapSourceNodeThroughFieldBound = HeapChoiceGeneratorBounded.getBounds().getTargets(sourceType.getName(), fi.getName(), symInputHeap.getBoundByIndex(hnb.getIndex()));
+			// bounded lazy initialization using a previously bounded lazily initialized object
+			if (symInputHeap.getBoundByIndex(currentIndexForPreviosulyIntersectingNode).intersects(mapSourceNodeThroughFieldBound)){
+				HeapNode candidateNode = symInputHeap.getNodeByIndex(currentIndexForPreviosulyIntersectingNode);
+				// here we should update pcHeap with the constraint attr == candidateNode.sym_v
+				pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, candidateNode.getSymbolic());
+				daIndex = candidateNode.getIndex();
+				symInputHeap.setPointsToIndexThroughField(objRef, fi.getName(), daIndex);
+			} else {
+				ti.getVM().getSystemState().setIgnored(true);
+				return this;
+			}
+		}
+		else {
+			if (currentChoice == numSymRefs){ //null object && null is in the bound of obj.fi
+				BitSet targetBound = HeapChoiceGeneratorBounded.getBounds().getTargets(sourceType.getName(), fi.getName(), symInputHeap.getBoundByIndex(hnb.getIndex()));
+				if (targetBound.get(0)){
+					pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, MJIEnv.NULL);
+					daIndex = MJIEnv.NULL;
+					symInputHeap.setPointsToIndexThroughField(objRef, fi.getName(), daIndex);
+				} else {
+					ti.getVM().getSystemState().setIgnored(true);
+					return this;
+				}
+
+			} else {
+				if (currentChoice == (numSymRefs + 1) && !abstractClass) { 
+
+					BitSet targetBitSetBound = BoundedHelper.getTargetBoundSet(symInputHeap, sourceType, hnb, fi.getName(), bounds);
+
+					if (BoundedHelper.keySetOfType(symInputHeap.nodesByIndex, fi.getTypeClassInfo()).size() == limit || ((targetBitSetBound.cardinality()==1) && targetBitSetBound.get(0))) { //null is always in the set, but it is not enough.
+						ti.getVM().getSystemState().setIgnored(true);
+						return this;
+					}
+
+					//					if (symInputHeap.nodesByIndex.keySet().size() == limit+1 || ((targetBitSetBound.cardinality()==1) && targetBitSetBound.get(0))) { //null is always in the set, but it is not enough.
+					//						ss.setIgnored(true);
+					//						return this;
+					//					}
+
+					daIndex = BoundedHelper.addNewHeapNode(typeClassInfo, ti, attr, ti.getVM().getKernelState(), pcHeap,
+							symInputHeap, targetBitSetBound);
+
+					symInputHeap.setPointsToIndexThroughField(objRef, fi.getName(), daIndex);
+
+				} else {
+					/**
+					 * Here it is ok to discard extra choices that became obsolete because of refinement. 
+					 */
+					assert false;
+					//					ss.setIgnored(true);
+					//					return this;
+				}
+			}
+		}
+
+
+		//		BoundedHelper.targetCount++;
+
+		ei.setReferenceField(fi,daIndex );
+		ei.setFieldAttr(fi, null);
+
+		//		ti.getTopFrame().clone().push(ei.getReferenceField(fi), fi.isReference());
+		frame.pushRef(daIndex);
+		//		ti.push(ei.getReferenceField(fi), fi.isReference());		((HeapChoiceGeneratorBounded)thisHeapCG).setCurrentPCheap(pcHeap);
+		((HeapChoiceGeneratorBounded)thisHeapCG).setCurrentSymInputHeap(symInputHeap);
+		((HeapChoiceGeneratorBounded)thisHeapCG).setCurrentPCheap(pcHeap);
+
+		Integer rootIndex = Helper.getRootIndex(symInputHeap);
+		String className = symInputHeap.getNodeByIndex(rootIndex).getType().getName();
+		Class<?> c = Helper.loadClassUnderAnalysis(className);
+
+
+		
+		boolean ok = hybridRepOKExecute(ti, symInputHeap, rootIndex, c);
+		HeapSymbolicListenerBounded3.numOfRepOKCalls++;
+
+
+		System.out.println("After hybrid");
+		if (!ok){
+						System.out.println(objRef + "- ");
+			HeapSymbolicListenerBounded3.numOfRepOKFails++;
+			ti.getVM().getSystemState().setIgnored(true);
+			return this;
+		} else {	
+						System.out.println(objRef + "+ ");
+			BoundedHelper.targetCount++;
+			String[] refine = conf.getStringArray("symbolic.lazy.refine");
+			if (refine != null && refine[0].equalsIgnoreCase("true")){
+				if (!BoundedHelper.refineHeap(symInputHeap, ti)){
+					ti.getVM().getSystemState().setIgnored(true);
+					return this;
+				}
+				String[] useBLISS = conf.getStringArray("symbolic.lazy.useauxsolver");
+				if (useBLISS != null && useBLISS[0].equalsIgnoreCase("true")){
+					HeapSymbolicListenerBounded3.numOfSolverCalls++;
+					if (!BoundedHelper.processHeapWithSolver(symInputHeap, ti)){						
+						ti.getVM().getSystemState().setIgnored(true);
+						return this;
+					}
+				}
+			} 
+		}	
+
+		//end-mfrias
+
+
+		return getNext(ti);
+	}
+
+
+	private static void imprimirArreglo(Integer[] A){
+		System.out.print("[");
+		for (int i=0; i<A.length; i++){
+			System.out.print(A[i]+",");
+		}
+		System.out.println("]");
+	}
+
+
+}

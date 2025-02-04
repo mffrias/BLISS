@@ -1,0 +1,8 @@
+#SinglyLinkedList_0
+SinglyLinkedList/SinglyLinkedList_0/next/SinglyLinkedList_1
+SinglyLinkedList/SinglyLinkedList_0/next/null
+SinglyLinkedList/SinglyLinkedList_1/next/SinglyLinkedList_2
+SinglyLinkedList/SinglyLinkedList_1/next/null
+SinglyLinkedList/SinglyLinkedList_2/next/SinglyLinkedList_3
+SinglyLinkedList/SinglyLinkedList_2/next/null
+SinglyLinkedList/SinglyLinkedList_3/next/null

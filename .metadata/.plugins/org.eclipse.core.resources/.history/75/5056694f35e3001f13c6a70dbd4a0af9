@@ -1,0 +1,735 @@
+package symbolicheap.bounded;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import gov.nasa.jpf.symbc.Debug;
+import symbolicheap.bounded.LinkedListNode;
+
+public class LinkedList {
+
+	// Stubs to be intercepted at the bytecode level
+	public void countStructure(LinkedListNode header) {
+	}
+
+	public void dumpStructure(LinkedListNode header) {
+	}
+
+	// Extra fields to support execution of hybridRepOK
+	public static final LinkedList SYMBOLICLINKEDLIST = new LinkedList();
+	public static final int SYMBOLICINT = (int) Integer.MIN_VALUE;
+	public static final Integer SYMBOLICINTEGER = Integer.MIN_VALUE;
+
+
+	// Hybrid invariant that tolerates partially symbolic structures
+
+
+	public boolean hybridRepOK() {
+		if (this == SYMBOLICLINKEDLIST){
+			return true;
+		}
+		if (header == null){
+			return false;
+		} else {
+			if (header == LinkedListNode.SYMBOLICLINKEDLISTNODE){
+				return true;
+			}
+		}
+
+		Set<LinkedListNode> visited = new HashSet<LinkedListNode>();
+		visited.add(header);
+		LinkedListNode current = header;
+
+		while (true) {
+			if (current.next == LinkedListNode.SYMBOLICLINKEDLISTNODE)
+				return true;
+			LinkedListNode next = current.next;
+			if (next == null)
+				return false;
+			if (next.prev == LinkedListNode.SYMBOLICLINKEDLISTNODE)
+				return true;
+			if (next.prev != current)
+				return false;
+			current = next;
+			if (!visited.add(next))
+				break;
+		}
+		if (current != header)
+			return false;
+
+		if (size == SYMBOLICINT)
+			return true;
+		if (visited.size() - 1 != size)
+			return false;
+
+		return true;
+	}
+
+
+
+	public boolean repOK_Concrete() {
+		if (header == null)
+			return false;
+
+		Set<LinkedListNode> visited = new HashSet<LinkedListNode>();
+		visited.add(header);
+		LinkedListNode current = header;
+
+		while (true) {
+			LinkedListNode next = current.next;
+			if (next == null)
+				return false;
+			if (next.prev != current)
+				return false;
+			current = next;
+			if (!visited.add(next))
+				break;
+		}
+		if (current != header)
+			return false;
+
+		if (visited.size() - 1 != size)
+			return false;
+
+		return true;
+	}
+
+
+	public boolean repOK_ConcretePost() {
+		if (header == null)
+			return false;
+
+		Set<LinkedListNode> visited = new HashSet<LinkedListNode>();
+		visited.add(header);
+		LinkedListNode current = header;
+
+		while (true) {
+			LinkedListNode next = current.next;
+			if (next == null)
+				return false;
+			if (next.prev != current)
+				return false;
+			current = next;
+			if (!visited.add(next))
+				break;
+		}
+		if (current != header)
+			return false;
+
+		if (visited.size() - 1 != size)
+			return false;
+
+		return true;
+	}
+
+
+
+	public void dump() {
+		System.out.print("[ ");
+		LinkedListNode p = header.next;
+		while (p != header) {
+			System.out.print(p.value + " ");
+			p = p.next;
+		}
+		System.out.println("]\n");
+	}
+
+
+	public LinkedListNode header = new LinkedListNode();
+	public int size = 0;
+
+	/**
+	 * Constructs an empty list.
+	 */
+	public LinkedList() {
+		header.next = header.prev = header;
+	}
+
+
+	/**
+	 * Returns the first value in this list.
+	 *
+	 * @return the first value in this list
+	 * @throws NoSuchvalueException if this list is empty
+	 */
+	public int getFirst() {
+		if (size==0)
+			throw new RuntimeException();
+
+		return header.next.value;
+	}
+
+	/**
+	 * Returns the last value in this list.
+	 *
+	 * @return the last value in this list
+	 * @throws NoSuchvalueException if this list is empty
+	 */
+	public int getLast()  {
+		if (size==0)
+			throw new RuntimeException();
+
+		return header.prev.value;
+	}
+
+	/**
+	 * Removes and returns the first value from this list.
+	 *
+	 * @return the first value from this list
+	 * @throws NoSuchvalueException if this list is empty
+	 */
+	public int removeFirst() {
+		return remove(header.next);
+	}
+
+	/**
+	 * Removes and returns the last value from this list.
+	 *
+	 * @return the last value from this list
+	 * @throws NoSuchvalueException if this list is empty
+	 */
+	public int removeLast() {
+		return remove(header.prev);
+	}
+
+	/**
+	 * Inserts the specified value at the beginning of this list.
+	 *
+	 * @param e the value to add
+	 */
+	public void addFirst(int e) {
+		addBefore(e, header.next);
+	}
+
+	/**
+	 * Appends the specified value to the end of this list.
+	 *
+	 * <p>This method is equivalent to {@link #add}.
+	 *
+	 * @param e the value to add
+	 */
+	public void addLast(int e) {
+		addBefore(e, header);
+	}
+
+	/**
+	 * Returns <tt>true</tt> if this list contains the specified value.
+	 * More formally, returns <tt>true</tt> if and only if this list contains
+	 * at least one value <tt>e</tt> such that
+	 * <tt>(o==null&nbsp;?&nbsp;e==null&nbsp;:&nbsp;o.equals(e))</tt>.
+	 *
+	 * @param o value whose presence in this list is to be tested
+	 * @return <tt>true</tt> if this list contains the specified value
+	 */
+	public boolean contains(int o) {
+		return indexOf(o) != -1;
+	}
+
+	/**
+	 * Returns the number of values in this list.
+	 *
+	 * @return the number of values in this list
+	 */
+	public int size() {
+		return size;
+	}
+
+	/**
+	 * Appends the specified value to the end of this list.
+	 *
+	 * <p>This method is equivalent to {@link #addLast}.
+	 *
+	 * @param e value to be appended to this list
+	 * @return <tt>true</tt> (as specified by {@link Collection#add})
+	 */
+	public boolean add(int e) {
+		addBefore(e, header);
+		return true;
+	}
+
+	/**
+	 * Removes the first occurrence of the specified value from this list,
+	 * if it is present.  If this list does not contain the value, it is
+	 * unchanged.  More formally, removes the value with the lowest index
+	 * <tt>i</tt> such that
+	 * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>
+	 * (if such an value exists).  Returns <tt>true</tt> if this list
+	 * contained the specified value (or equivalently, if this list
+	 * changed as a result of the call).
+	 *
+	 * @param o value to be removed from this list, if present
+	 * @return <tt>true</tt> if this list contained the specified value
+	 */
+	public boolean removeValue(int i) {
+
+		for (LinkedListNode e = header.next; e != header; e = e.next) {
+			if (i == e.value) {
+				remove(e);
+				return true;
+			}
+		}	
+
+		return false;
+	}
+
+
+
+	/**
+	 * Removes all of the values from this list.
+	 */
+	public void clear() {
+		LinkedListNode e = header.next;
+		while (e != header) {
+			LinkedListNode next = e.next;
+			e.next = e.prev = null;
+			e = next;
+		}
+		header.next = header.prev = header;
+		size = 0;
+	}
+
+
+	// Positional Access Operations
+
+	/**
+	 * Returns the value at the specified position in this list.
+	 *
+	 * @param index index of the value to return
+	 * @return the value at the specified position in this list
+	 * @throws IndexOutOfBoundsException {@inheritDoc}
+	 */
+	public int get(int index) {
+		return entry(index).value;
+	}
+
+	/**
+	 * Replaces the value at the specified position in this list with the
+	 * specified value.
+	 *
+	 * @param index index of the value to replace
+	 * @param value value to be stored at the specified position
+	 * @return the value prevly at the specified position
+	 * @throws IndexOutOfBoundsException {@inheritDoc}
+	 */
+	public int set(int index, int value) {
+		LinkedListNode e = entry(index);
+		int oldVal = e.value;
+		e.value = value;
+		return oldVal;
+	}
+
+	/**
+	 * Inserts the specified value at the specified position in this list.
+	 * Shifts the value currently at that position (if any) and any
+	 * subsequent values to the right (adds one to their indices).
+	 *
+	 * @param index index at which the specified value is to be inserted
+	 * @param value value to be inserted
+	 * @throws IndexOutOfBoundsException {@inheritDoc}
+	 */
+	public void add(int index, int value) {
+		addBefore(value, (index==size ? header : entry(index)));
+	}
+
+	/**
+	 * Removes the value at the specified position in this list.  Shifts any
+	 * subsequent values to the left (subtracts one from their indices).
+	 * Returns the value that was removed from the list.
+	 *
+	 * @param index the index of the value to be removed
+	 * @return the value prevly at the specified position
+	 * @throws IndexOutOfBoundsException {@inheritDoc}
+	 */
+	public int remove(int index) {
+		return remove(entry(index));
+	}
+
+	/**
+	 * Returns the indexed entry.
+	 * 
+	 * Modified by removing a shift operator that was not supported by the choco SMT solver.
+	 */
+	private LinkedListNode entry(int index) {
+		if (index < 0 || index >= size)
+			throw new IndexOutOfBoundsException("Index: "+index+
+					", Size: "+size);
+		if (index < size - index){
+			LinkedListNode e = header.next;
+			for (int i = 0; i < index; i++)
+				e = e.next;
+			return e;
+		} else {
+			LinkedListNode e = header.prev;
+			for (int i = size; i > index; i--)
+				e = e.prev;
+			return e;			
+		}
+
+	}
+
+
+	// Search Operations
+
+	/**
+	 * Returns the index of the first occurrence of the specified value
+	 * in this list, or -1 if this list does not contain the value.
+	 * More formally, returns the lowest index <tt>i</tt> such that
+	 * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
+	 * or -1 if there is no such index.
+	 *
+	 * @param o value to search for
+	 * @return the index of the first occurrence of the specified value in
+	 *         this list, or -1 if this list does not contain the value
+	 */
+	public int indexOf(int i) {
+		int index = 0;
+		for (LinkedListNode e = header.next; e != header; e = e.next) {
+			if (i == e.value)
+				return index;
+			index++;
+		}
+		return -1;
+	}
+
+	/**
+	 * Returns the index of the last occurrence of the specified value
+	 * in this list, or -1 if this list does not contain the value.
+	 * More formally, returns the highest index <tt>i</tt> such that
+	 * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
+	 * or -1 if there is no such index.
+	 *
+	 * @param o value to search for
+	 * @return the index of the last occurrence of the specified value in
+	 *         this list, or -1 if this list does not contain the value
+	 */
+	public int lastIndexOf(int i) {
+		int index = size;
+
+		for (LinkedListNode e = header.prev; e != header; e = e.prev) {
+			index--;
+			if (i == e.value)
+				return index;
+		}
+		return -1;
+	}
+
+	// Queue operations.
+
+	/**
+	 * Retrieves, but does not remove, the head (first value) of this list.
+	 * @return the head of this list, or <tt>null</tt> if this list is empty
+	 * @since 1.5
+	 */
+	public int peek() {
+		if (size==0)
+			throw new RuntimeException();
+		return getFirst();
+	}
+
+	/**
+	 * Retrieves, but does not remove, the head (first value) of this list.
+	 * @return the head of this list
+	 * @throws NoSuchvalueException if this list is empty
+	 * @since 1.5
+	 */
+	public int value() {
+		return getFirst();
+	}
+
+	/**
+	 * Retrieves and removes the head (first value) of this list
+	 * @return the head of this list, or <tt>null</tt> if this list is empty
+	 * @since 1.5
+	 */
+	public int poll() {
+		if (size==0)
+			throw new RuntimeException();
+		return removeFirst();
+	}
+
+	/**
+	 * Retrieves and removes the head (first value) of this list.
+	 *
+	 * @return the head of this list
+	 * @throws NoSuchvalueException if this list is empty
+	 * @since 1.5
+	 */
+	public int remove() {
+		return removeFirst();
+	}
+
+	/**
+	 * Adds the specified value as the tail (last value) of this list.
+	 *
+	 * @param e the value to add
+	 * @return <tt>true</tt> (as specified by {@link Queue#offer})
+	 * @since 1.5
+	 */
+	public boolean offer(int e) {
+		return add(e);
+	}
+
+	// Deque operations
+	/**
+	 * Inserts the specified value at the front of this list.
+	 *
+	 * @param e the value to insert
+	 * @return <tt>true</tt> (as specified by {@link Deque#offerFirst})
+	 * @since 1.6
+	 */
+	public boolean offerFirst(int e) {
+		addFirst(e);
+		return true;
+	}
+
+	/**
+	 * Inserts the specified value at the end of this list.
+	 *
+	 * @param e the value to insert
+	 * @return <tt>true</tt> (as specified by {@link Deque#offerLast})
+	 * @since 1.6
+	 */
+	public boolean offerLast(int e) {
+		addLast(e);
+		return true;
+	}
+
+	/**
+	 * Retrieves, but does not remove, the first value of this list,
+	 * or returns <tt>null</tt> if this list is empty.
+	 *
+	 * @return the first value of this list, or <tt>null</tt>
+	 *         if this list is empty
+	 * @since 1.6
+	 */
+	public int peekFirst() {
+		if (size==0)
+			throw new RuntimeException();
+		return getFirst();
+	}
+
+	/**
+	 * Retrieves, but does not remove, the last value of this list,
+	 * or returns <tt>null</tt> if this list is empty.
+	 *
+	 * @return the last value of this list, or <tt>null</tt>
+	 *         if this list is empty
+	 * @since 1.6
+	 */
+	public int peekLast() {
+		if (size==0)
+			throw new RuntimeException();
+		return getLast();
+	}
+
+	/**
+	 * Retrieves and removes the first value of this list,
+	 * or returns <tt>null</tt> if this list is empty.
+	 *
+	 * @return the first value of this list, or <tt>null</tt> if
+	 *     this list is empty
+	 * @since 1.6
+	 */
+	public int pollFirst() {
+		if (size==0)
+			throw new RuntimeException();
+		return removeFirst();
+	}
+
+	/**
+	 * Retrieves and removes the last value of this list,
+	 * or returns <tt>null</tt> if this list is empty.
+	 *
+	 * @return the last value of this list, or <tt>null</tt> if
+	 *     this list is empty
+	 * @since 1.6
+	 */
+	public int pollLast() {
+		if (size==0)
+			throw new RuntimeException();
+		return removeLast();
+	}
+
+	/**
+	 * Pushes an value onto the stack represented by this list.  In other
+	 * words, inserts the value at the front of this list.
+	 *
+	 * <p>This method is equivalent to {@link #addFirst}.
+	 *
+	 * @param e the value to push
+	 * @since 1.6
+	 */
+	public void push(int e) {
+		addFirst(e);
+	}
+
+	/**
+	 * Pops an value from the stack represented by this list.  In other
+	 * words, removes and returns the first value of this list.
+	 *
+	 * <p>This method is equivalent to {@link #removeFirst()}.
+	 *
+	 * @return the value at the front of this list (which is the top
+	 *         of the stack represented by this list)
+	 * @throws NoSuchvalueException if this list is empty
+	 * @since 1.6
+	 */
+	public int pop() {
+		return removeFirst();
+	}
+
+	/**
+	 * Removes the first occurrence of the specified value in this
+	 * list (when traversing the list from head to tail).  If the list
+	 * does not contain the value, it is unchanged.
+	 *
+	 * @param o value to be removed from this list, if present
+	 * @return <tt>true</tt> if the list contained the specified value
+	 * @since 1.6
+	 */
+	public boolean removeFirstOccurrence(int o) {
+		return removeValue(o);
+	}
+
+	/**
+	 * Removes the last occurrence of the specified value in this
+	 * list (when traversing the list from head to tail).  If the list
+	 * does not contain the value, it is unchanged.
+	 *
+	 * @param o value to be removed from this list, if present
+	 * @return <tt>true</tt> if the list contained the specified value
+	 * @since 1.6
+	 */
+	public boolean removeLastOccurrence(int i) {
+
+		for (LinkedListNode e = header.prev; e != header; e = e.prev) {
+			if (i == e.value) {
+				remove(e);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns a list-iterator of the values in this list (in proper
+	 * sequence), starting at the specified position in the list.
+	 * Obeys the general contract of <tt>List.listIterator(int)</tt>.<p>
+	 *
+	 * The list-iterator is <i>fail-fast</i>: if the list is structurally
+	 * modified at any time after the Iterator is created, in any way except
+	 * through the list-iterator's own <tt>remove</tt> or <tt>add</tt>
+	 * methods, the list-iterator will throw a
+	 * <tt>ConcurrentModificationException</tt>.  Thus, in the face of
+	 * concurrent modification, the iterator fails quickly and cleanly, rather
+	 * than risking arbitrary, non-deterministic behavior at an undetermined
+	 * time in the future.
+	 *
+	 * @param index index of the first value to be returned from the
+	 *              list-iterator (by a call to <tt>next</tt>)
+	 * @return a ListIterator of the values in this list (in proper
+	 *         sequence), starting at the specified position in the list
+	 * @throws IndexOutOfBoundsException {@inheritDoc}
+	 * @see List#listIterator(int)
+	 */
+
+
+
+	private LinkedListNode addBefore(int e, LinkedListNode entry) {
+		LinkedListNode newEntry = new LinkedListNode(e, entry, entry.prev);
+		newEntry.prev.next = newEntry;
+		newEntry.next.prev = newEntry;
+		size++;
+		return newEntry;
+	}
+
+	private int remove(LinkedListNode e) {
+		if (e == header)
+			throw new RuntimeException("size = " + this.size);
+
+		int result = e.value;
+		e.prev.next = e.next;
+		e.next.prev = e.prev;
+		e.next = e.prev = null;
+		size--;
+		return result;
+	}
+
+
+
+	/**
+	 * Returns a shallow copy of this <tt>LinkedList</tt>. (The values
+	 * themselves are not cloned.)
+	 *
+	 * @return a shallow copy of this <tt>LinkedList</tt> instance
+	 */
+	public Object clone() {
+		LinkedList clone = null;
+		try {
+			clone = (LinkedList) super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new InternalError();
+		}
+
+		// Put clone into "virgin" state
+		clone.header = new LinkedListNode(0, null, null);
+		clone.header.next = clone.header.prev = clone.header;
+		clone.size = 0;
+
+		// Initialize clone with our values
+		for (LinkedListNode e = header.next; e != header; e = e.next)
+			clone.add(e.value);
+
+		return clone;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+	//	public static void main(String[] args) {
+	//
+	//		LinkedList X = new LinkedList();
+	////		X = (LinkedList) Debug.makeSymbolicRef("X", X);
+	//		X = (LinkedList) Debug.makeSymbolicRefBounded("X", X);
+	//
+	//		int value0 = 100;
+	//		if (X!=null ){
+	//			try{
+	//				X.remove(7);
+	//				X.dumpStructure(X.header);
+	//				X.countStructure(X.header);
+	//			} catch (Throwable t) {
+	//			}
+	//		}
+	//	}
+
+
+	public static int LIMIT = 15;
+
+	public static void main(String[] args) {
+		LinkedList L = new LinkedList();
+		 L = (LinkedList) Debug.makeSymbolicRef("L", L);
+//		L = (LinkedList) Debug.makeSymbolicRefBounded("L", L);
+
+		try {
+			if (L != null){
+				L.repOK_Concrete();
+				L.dumpStructure(L.header);
+			}
+		} catch (Exception e) {
+			// Ignored!
+		}
+	}
+}
+
+
+// ~~~~~~~~~~~~~~~~~ End of class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+

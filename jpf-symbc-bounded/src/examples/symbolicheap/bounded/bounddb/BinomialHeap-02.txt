@@ -1,0 +1,15 @@
+#BinomialHeap_0
+@Nodes
+@sibling
+@child
+@parent
+BinomialHeap/BinomialHeap_0/Nodes/null
+BinomialHeap/BinomialHeap_0/Nodes/BinomialHeapNode_0
+BinomialHeapNode/BinomialHeapNode_0/sibling/null
+BinomialHeapNode/BinomialHeapNode_1/sibling/null
+BinomialHeapNode/BinomialHeapNode_0/child/BinomialHeapNode_1
+BinomialHeapNode/BinomialHeapNode_0/child/null
+BinomialHeapNode/BinomialHeapNode_1/child/null
+BinomialHeapNode/BinomialHeapNode_0/parent/null
+BinomialHeapNode/BinomialHeapNode_1/parent/null
+BinomialHeapNode/BinomialHeapNode_1/parent/BinomialHeapNode_0

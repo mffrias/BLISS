@@ -1,0 +1,424 @@
+package symbolicheap.bounded;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+
+import gov.nasa.jpf.symbc.Debug;
+
+//
+// Copyright (C) 2006 United States Government as represented by the
+// Administrator of the National Aeronautics and Space Administration
+// (NASA).  All Rights Reserved.
+// 
+// This software is distributed under the NASA Open Source Agreement
+// (NOSA), version 1.3.  The NOSA has been approved by the Open Source
+// Initiative.  See the file NOSA-1.3-JPF at the top of the distribution
+// directory tree for the complete NOSA document.
+// 
+// THE SUBJECT SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY OF ANY
+// KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY, INCLUDING, BUT NOT
+// LIMITED TO, ANY WARRANTY THAT THE SUBJECT SOFTWARE WILL CONFORM TO
+// SPECIFICATIONS, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+// A PARTICULAR PURPOSE, OR FREEDOM FROM INFRINGEMENT, ANY WARRANTY THAT
+// THE SUBJECT SOFTWARE WILL BE ERROR FREE, OR ANY WARRANTY THAT
+// DOCUMENTATION, IF PROVIDED, WILL CONFORM TO THE SUBJECT SOFTWARE.
+//
+
+
+// FibHeap.java
+// from : http://sciris.shu.edu/~borowski/Puzzle/Puzzle.html
+
+public class FibHeap {
+	public FibHeapNode min;
+
+	public static final FibHeap SYMBOLICFIBHEAP = new FibHeap(); //field added to execute the hybridRepOK.
+	public static final int SYMBOLICINT = (int) Integer.MIN_VALUE; //field added to execute the hybridRepOK.
+
+	
+	public int n;
+
+	public FibHeap() {}
+
+	//-------------------------------------------------------------------
+
+	
+
+	
+	
+	
+    public boolean checkHeapified() {
+        FibHeapNode current = min;
+        do {
+            if (!current.checkHeapified())
+                return false;
+            current = current.right;
+        } while (current != min);
+        return true;
+    }
+
+	
+    
+    private int getMin() {
+        FibHeapNode temp = min;
+        int min = this.min.cost;
+        do {
+            if (temp.cost < min)
+                min = temp.cost;
+            temp = temp.right;
+        } while (temp != this.min);
+        return min;
+    }
+
+    
+	
+    public boolean repOK() {
+        if (min == null)
+            return n == 0;
+        // checks that structural constrainst are satisfied
+        Set<FibHeapNode> visited = new HashSet<FibHeapNode>();
+        if (!min.isStructural(visited, null))
+            return false;
+        // checks that the total size is consistent
+        if (visited.size() != n)
+            return false;
+        // checks that the degrees of all trees are fibonacci
+        if (!min.checkDegrees())
+            return false;
+        // checks that keys are heapified
+        if (!checkHeapified())
+            return false;
+        if (getMin() != min.cost)
+            return false;
+        return visited.size() <= LIMIT;
+    }
+	
+    
+    
+    
+    
+    
+    
+    
+    public boolean checkHeapifiedHybrid() {
+        FibHeapNode current = min;
+        do {
+            if (!current.checkHeapifiedHybrid())
+                return false;
+            current = current.right;
+        } while (current != FibHeapNode.SYMBOLICFIBHEAPNODE && current != min);
+        return true;
+    }
+
+    
+    
+    /** requires min != FibHeapNode.SYMBOLICFIBHEAPNODE;
+     * @return
+     */
+    private int getMinHybrid() {
+        FibHeapNode temp = min;
+        int min = this.min.cost;
+        do {
+            if (temp.cost < min)
+                min = temp.cost;
+            temp = temp.right;
+        } while (temp != this.min);
+        return min;
+    }
+
+    
+    
+    
+    public boolean hybridRepOK() {
+    	if (this == SYMBOLICFIBHEAP)
+    		return true;
+    	
+        if (min == null)
+            return n == SYMBOLICINT ? true : n==0;
+        
+        if (min == FibHeapNode.SYMBOLICFIBHEAPNODE)
+        	return true;
+        
+        // checks that structural constrainst are satisfied
+        Set<FibHeapNode> visited = new HashSet<FibHeapNode>();
+        if (!min.isStructuralHybrid(visited, null))
+            return false;
+        
+        // checks that the total size is consistent
+        if (n != SYMBOLICINT && visited.size() != n)
+            return false;
+        
+        // checks that the degrees of all trees are fibonacci
+        if (!min.checkDegreesHybrid())
+            return false;
+        
+        // checks that keys are heapified
+        if (!checkHeapifiedHybrid())
+            return false;
+        
+        if (min.cost != FibHeapNode.SYMBOLICINT && getMinHybrid() != min.cost)
+            return false;
+        
+        return visited.size()<=LIMIT;
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	private void cascadingCut(FibHeapNode y) {
+		FibHeapNode z = y.parent;
+		if (z != null) {
+			if (!y.mark) {
+				y.mark = true;
+			} else {
+				cut(y, z);
+				cascadingCut(z);
+			}
+		}
+	}
+
+	private void consolidate() {
+		int D = n + 1;
+		FibHeapNode A[] = new FibHeapNode[D];
+		
+		{
+			int i = 0;
+			for (; i < D;) {
+				A[i] = null;
+				i++;
+			}
+		}
+
+		int k = 0;
+		FibHeapNode x = min;
+		if (x != null) {
+			k++;
+			for (x = x.right; x != min; x = x.right) {
+				k++;
+			}
+		}
+		while (k > 0) {
+			int d = x.degree;
+			FibHeapNode rightNode = x.right;
+			while (A[d] != null) {
+				FibHeapNode y = A[d];
+				if (x.cost > y.cost) {
+					FibHeapNode temp = y;
+					y = x;
+					x = temp;
+				} 
+				link(y, x);
+				A[d] = null;
+				d++;
+			}
+
+			A[d] = x;
+			x = rightNode;
+			k--;
+		}
+
+		min = null;
+		{
+			int i = 0;
+			for (; i < D;) {
+				if (A[i] != null)
+					if (min != null) {
+						A[i].left.right = A[i].right;
+						A[i].right.left = A[i].left;
+						A[i].left = min;
+						A[i].right = min.right;
+						min.right = A[i];
+						A[i].right.left = A[i];
+						if (A[i].cost < min.cost) {
+							min = A[i];
+						}
+					} else {
+						min = A[i];
+					}
+				i++;
+			}
+		}
+	}
+
+	private void cut(FibHeapNode x, FibHeapNode y) {
+		x.left.right = x.right;
+		x.right.left = x.left;
+		y.degree--;
+		if (y.child == x) {
+			y.child = x.right;
+		}
+		if (y.degree == 0) {
+			y.child = null;
+		} 
+		x.left = min;
+		x.right = min.right;
+		min.right = x;
+		x.right.left = x;
+		x.parent = null;
+		x.mark = false;
+	}
+
+	public void decreaseKey(FibHeapNode x, int c) {
+		if (c > x.cost) {
+			//System.err.println("Error: new key is greater than current key.");
+			return;
+		}
+		x.cost = c;
+		FibHeapNode y = x.parent;
+		if ((y != null) && (x.cost < y.cost)) {
+			cut(x, y);
+			cascadingCut(y);
+		}
+		if (x.cost < min.cost) {
+			min = x;
+		}
+	}
+
+	public void delete(FibHeapNode node) {
+		decreaseKey(node, Integer.MIN_VALUE);
+		removeMin();
+	}
+
+	public boolean empty() {
+		return min == null;
+	}
+
+	public void insert(int c) {
+		FibHeapNode n = new FibHeapNode(c);
+		insert(n);
+	}
+
+	public FibHeapNode insert(FibHeapNode toInsert) {
+		if (min != null) {
+			toInsert.left = min;
+			toInsert.right = min.right;
+			min.right = toInsert;
+			toInsert.right.left = toInsert;
+			if (toInsert.cost < min.cost) {
+				min = toInsert;
+			}
+		} else {
+			min = toInsert;
+		}
+		n++;
+		return toInsert;
+	}
+
+	private void link(FibHeapNode node1, FibHeapNode node2) {
+		node1.left.right = node1.right;
+		node1.right.left = node1.left;
+		node1.parent = node2;
+		if (node2.child == null) {
+			node2.child = node1;
+			node1.right = node1;
+			node1.left = node1;
+		} else {
+			node1.left = node2.child;
+			node1.right = node2.child.right;
+			node2.child.right = node1;
+			node1.right.left = node1;
+		}
+		node2.degree++;
+		node1.mark = false;
+	}
+
+	public FibHeapNode min() {
+		return min;
+	}
+
+	public FibHeapNode removeMin() {
+		FibHeapNode z = min;
+		if (z != null) {
+			int i = z.degree;
+			FibHeapNode x = z.child;
+			while (i > 0) {
+				FibHeapNode nextChild = x.right;
+				x.left.right = x.right;
+				x.right.left = x.left;
+				x.left = min;
+				x.right = min.right;
+				min.right = x;
+				x.right.left = x;
+				x.parent = null;
+				x = nextChild;
+				i--;
+			}
+			z.left.right = z.right;
+			z.right.left = z.left;
+			if (z == z.right) {
+				min = null;
+			} else {
+				min = z.right;
+				consolidate();
+			}
+
+			n--;
+		}
+		return z;
+	}
+
+	public int size() {
+		return n;
+	}
+
+	public static FibHeap union(FibHeap heap1, FibHeap heap2) {
+		FibHeap heap = new FibHeap();
+		if ((heap1 != null) && (heap2 != null)) {
+			heap.min = heap1.min;
+			if (heap.min != null) {
+				if (heap2.min != null) {
+					heap.min.right.left = heap2.min.left;
+					heap2.min.left.right = heap.min.right;
+					heap.min.right = heap2.min;
+					heap2.min.left = heap.min;
+					if (heap2.min.cost < heap1.min.cost) {
+						heap.min = heap2.min;
+					}
+				}
+			} else {
+				heap.min = heap2.min;
+			}
+			heap.n = heap1.n + heap2.n;
+		}
+		return heap;
+	}
+
+	
+	
+	public void dumpStructure(FibHeap root) {
+	}
+
+	public void countStructure(FibHeapNode root) {
+	}
+
+	
+	private static int LIMIT = __SIZE__;
+
+	public static void main(String[] args) {
+		FibHeap f = new FibHeap();
+		// f = (FibHeap) Debug.makeSymbolicRef("f", f);
+		f = (FibHeap) Debug.makeSymbolicRefBounded("f", f);
+
+		if (f != null && f.repOK()){
+			f.countStructure(f.min);
+		}
+	}
+
+}

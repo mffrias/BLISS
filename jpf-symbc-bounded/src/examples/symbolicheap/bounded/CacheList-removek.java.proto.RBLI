@@ -1,0 +1,441 @@
+package symbolicheap.bounded;
+
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import gov.nasa.jpf.jvm.Verify;
+import gov.nasa.jpf.symbc.Debug;
+
+public class CacheList extends Object {
+
+
+	// Extra fields to support execution of hybridRepOK
+	public static final CacheList SYMBOLICCACHELIST = new CacheList();
+	public static final int SYMBOLICINT = (int) Integer.MIN_VALUE;
+	public static final Integer SYMBOLICINTEGER = Integer.MIN_VALUE;
+
+
+
+	public CacheListNode listHeader;
+
+	public CacheListNode cacheHeader;
+
+	public int maximumCacheSize;
+
+	public int cacheSize;
+
+	public int listSize;
+
+	public static final int DEFAULT_CACHE_SIZE = 20;
+
+	public int modCount;
+
+
+
+	public boolean hybridRepOK() {
+		if (this.listHeader == null)
+			return false;
+
+		if (this.listHeader != CacheListNode.SYMBOLICCACHELISTNODE){
+			if (this.listHeader.listNext == null)
+				return false;
+		} else
+			return true;
+
+		if (this.listHeader != CacheListNode.SYMBOLICCACHELISTNODE){
+			if (this.listHeader.listPrevious == null)
+				return false;
+		} else
+			return true;
+
+		if (this.cacheSize != this.SYMBOLICINT && this.maximumCacheSize != this.SYMBOLICINT){
+			if (this.cacheSize > this.maximumCacheSize)
+				return false;
+		} else
+			return true;
+
+		if (this.listSize != this.SYMBOLICINT){
+			if (this.listSize < 0)
+				return false;
+		} else
+			return true;
+
+		int cyclicSize = 0;
+
+		CacheListNode n = this.listHeader;
+		do {
+			cyclicSize++;
+
+			if (n.listPrevious != CacheListNode.SYMBOLICCACHELISTNODE){
+				if (n.listPrevious == null)
+					return false;
+			} else
+				return true;
+
+			if (n.listPrevious.listNext != CacheListNode.SYMBOLICCACHELISTNODE){
+				if (n.listPrevious.listNext != n)
+					return false;
+			} else 
+				return true;
+
+			if (n.listNext != CacheListNode.SYMBOLICCACHELISTNODE){
+				if (n.listNext == null)
+					return false;
+			} else
+				return true;
+
+			if (n.listNext.listPrevious != CacheListNode.SYMBOLICCACHELISTNODE){
+				if (n.listNext.listPrevious != n)
+					return false;
+			} else
+				return true;
+
+			if (n != null)
+				n = n.listNext;
+		} while (n != this.listHeader && n != null && n != CacheListNode.SYMBOLICCACHELISTNODE);
+
+		if (n != CacheListNode.SYMBOLICCACHELISTNODE){
+			if (n == null)
+				return false;
+		} else
+			return true;
+
+		if (this.listSize != CacheList.SYMBOLICINT){
+			if (this.listSize != cyclicSize - 1)
+				return false;
+		} else
+			return true;
+
+		int acyclicSize = 0;
+
+		if (this.cacheHeader != CacheListNode.SYMBOLICCACHELISTNODE){
+			CacheListNode m = this.cacheHeader;
+
+			Set<CacheListNode> visited_nodes = new HashSet<CacheListNode>();
+			while (m != null && m != CacheListNode.SYMBOLICCACHELISTNODE) {
+
+				if (visited_nodes.contains(m))
+					return false;
+
+				visited_nodes.add(m);
+
+				acyclicSize++;
+
+				if (m.listPrevious != CacheListNode.SYMBOLICCACHELISTNODE){
+					if (m.listPrevious != null)
+						return false;
+				} else
+					return true;
+
+				if (m.nodeValue != CacheListNode.SYMBOLICINT){
+					if (m.nodeValue != 0)
+						return false;
+				} else 
+					return true;
+
+				m = m.listNext;
+
+			}
+		} else 
+			return true;
+
+		if (this.cacheSize != CacheList.SYMBOLICINT){
+			if (this.cacheSize != acyclicSize)
+				return false;
+		} else
+			return true;
+
+
+		return true;	
+	}
+
+
+
+	boolean concreteRepOk() {
+		if (this.listHeader == null)
+			return false;
+
+		if (this.listHeader.listNext == null)
+			return false;
+
+		if (this.listHeader.listPrevious == null)
+			return false;
+
+		if (this.cacheSize > this.maximumCacheSize)
+			return false;
+
+		if (this.listSize < 0)
+			return false;
+
+		int cyclicSize = 0;
+
+		CacheListNode n = this.listHeader;
+		do {
+			cyclicSize++;
+
+			if (n.listPrevious == null)
+				return false;
+
+			if (n.listPrevious.listNext != n)
+				return false;
+
+			if (n.listNext == null)
+				return false;
+
+			if (n.listNext.listPrevious != n)
+				return false;
+
+			if (n != null)
+				n = n.listNext;
+		} while (n != this.listHeader && n != null);
+
+		if (n == null)
+			return false;
+
+		if (this.listSize != cyclicSize - 1)
+			return false;
+
+		int acyclicSize = 0;
+
+		CacheListNode m = this.cacheHeader;
+
+		Set<CacheListNode> visited_nodes = new HashSet<CacheListNode>();
+		while (m != null) {
+
+			if (visited_nodes.contains(m))
+				return false;
+
+			visited_nodes.add(m);
+
+			acyclicSize++;
+
+			if (m.listPrevious != null)
+				return false;
+
+			if (m.nodeValue != 0)
+				return false;
+
+			m = m.listNext;
+
+		}
+
+		if (this.cacheSize != acyclicSize)
+			return false;
+
+		return true;
+	}
+
+
+
+
+
+	List getDatas() {
+		List result = new LinkedList();
+
+		CacheListNode current = this.listHeader.listNext;
+		while (current != this.listHeader) {
+			result.add(current.nodeValue);
+			current = current.listNext;
+		}
+
+		return result;
+	}
+
+	public CacheList() {
+		this.listHeader = new CacheListNode();
+		this.listHeader.listNext=this.listHeader;
+		this.listHeader.listPrevious=this.listHeader;
+	}
+
+	public CacheList(int maxCacheSize) {
+		this.maximumCacheSize = maxCacheSize;
+
+		this.cacheSize = 0;
+		this.listSize = 0;
+
+		this.listHeader = new CacheListNode();
+		this.listHeader.listNext = this.listHeader;
+		this.listHeader.listPrevious = this.listHeader;
+
+	}
+
+
+	public int remove(final int index) {
+		CacheListNode node;
+		java.lang.IndexOutOfBoundsException exception;
+		exception = null;
+		if (index < 0) {
+			exception = new java.lang.IndexOutOfBoundsException();
+			throw exception;
+		}
+		if (index == this.listSize) {
+			exception = new java.lang.IndexOutOfBoundsException();
+			throw exception;
+		}
+		if (index > this.listSize) {
+			exception = new java.lang.IndexOutOfBoundsException();
+			throw exception;
+		}
+		CacheListNode node1;
+		if (index < this.listSize - index) {
+			node1 = this.listHeader.listNext;
+			int currentIndex;
+			currentIndex = 0;
+			while (currentIndex < index) { 
+				node1 = node1.listNext;
+				currentIndex = currentIndex + 1;
+			}
+		} else {
+			node1 = this.listHeader;
+			int currentIndex = this.listSize;
+			while (currentIndex > index) {
+				node1 = node1.listPrevious;
+				currentIndex = currentIndex - 1;
+			}
+		}
+		node = node1;
+		int oldValue;
+		oldValue = node.nodeValue;
+		node.listPrevious.listNext = node.listNext;
+		node.listNext.listPrevious = node.listPrevious;
+		this.listSize = this.listSize - 1;
+		this.modCount = this.modCount + 1;
+		if (this.cacheSize < this.maximumCacheSize) {
+			CacheListNode nextCachedNode;
+			nextCachedNode = this.cacheHeader;
+			node.listPrevious = null;
+			node.listNext = nextCachedNode;
+			node.nodeValue = 0;
+			this.cacheHeader = node;
+			this.cacheSize = this.cacheSize + 1;
+		}
+		return oldValue;
+	}
+
+	/**
+	 * @j2daMethod
+	 */
+	public boolean add(final int data_value) {
+
+		final CacheListNode fresh_node = new CacheListNode(); 
+
+		CacheListNode cachedNode;
+		if (this.cacheSize == 0) {
+			cachedNode = null;
+		} else {
+			cachedNode = this.cacheHeader;
+			this.cacheHeader = this.cacheHeader.listNext;
+			cachedNode.listNext = null;
+			this.cacheSize = this.cacheSize - 1;
+		}
+
+		CacheListNode new_node;
+		if (cachedNode == null) {
+			new_node = fresh_node;
+		} else
+			new_node = cachedNode;
+
+		new_node.nodeValue = data_value;
+		new_node.listNext = this.listHeader;
+		new_node.listPrevious = this.listHeader.listPrevious;
+		this.listHeader.listPrevious.listNext = new_node;
+		this.listHeader.listPrevious = new_node;
+		this.listSize = this.listSize + 1;
+		this.modCount = this.modCount + 1;
+
+		boolean ret_value = true;
+		return ret_value;
+	}
+
+
+	public boolean contains(final int data_value) {
+
+		int i = 0;
+		CacheListNode node = this.listHeader.listNext;
+		boolean found = false;
+		while (node != this.listHeader && found == false) {
+			if (node.nodeValue == data_value) {
+				found = true;
+			} else {
+				i = i + 1;
+				node = node.listNext;
+			}
+		}
+		if (found==false)
+			i = -1;
+
+		int index_ret = i;
+
+		boolean ret_value;
+		if (index_ret != -1)
+			ret_value = true;
+		else
+			ret_value = false;
+
+		return ret_value;
+
+	}
+
+	int size() {
+		return listSize;
+	}
+
+	// Stubs to be intercepted at the bytecode level
+	public void countStructure(CacheListNode cacheHeader2) {
+	}
+
+
+	protected void removeKNodes(int k) {
+		// Add the removed nodes to the cache, then remove the rest.
+		// We can add them to the cache before removing them.
+		final int delta = maximumCacheSize - cacheSize;
+		final int numberOfNodesToCache = k;
+		CacheListNode node = listHeader.listNext;
+		for (int currentIndex = 0; currentIndex < numberOfNodesToCache; currentIndex++) {
+//			System.out.println(numberOfNodesToCache);
+			final CacheListNode oldNode = node;
+			node = node.listNext;
+			// The code below used to be `addNodeToCache(oldNode);'  (unfolded)
+			if (cacheSize < maximumCacheSize) {
+				// clear the node's contents and add it to the cache.
+				final CacheListNode nextCachedNode = cacheHeader;
+				oldNode.listPrevious = null;
+				oldNode.listNext = nextCachedNode;
+				oldNode.nodeValue = 0;
+				cacheHeader = oldNode;
+				cacheSize++;
+			} else {
+				// don't cache the node.
+			}
+		}
+		// The code below used to be `super.removeAllNodes();'  (unfolded)
+		listHeader.listNext = listHeader;
+		listHeader.listPrevious = listHeader;
+		listSize = 0;
+		modCount++;
+	}
+
+
+
+	public static int LIMIT = __SIZE__;
+
+	public static void main(String[] args) {
+		CacheList L = new CacheList();
+		// L = (CacheList) Debug.makeSymbolicRef("L", L);
+		L = (CacheList) Debug.makeSymbolicRefBounded("L", L);
+
+		try {
+			if (L != null && L.maximumCacheSize == 20) {
+				L.removeKNodes(__SIZE__ - 1);
+				L.countStructure(L.cacheHeader);
+			}
+		} catch (Exception e) {
+			// Ignored!
+		}
+	}
+
+
+}
+

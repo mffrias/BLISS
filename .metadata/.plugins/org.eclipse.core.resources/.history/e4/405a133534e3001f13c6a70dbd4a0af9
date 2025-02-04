@@ -1,0 +1,35 @@
+classpath = ${jpf-symbc-bounded}/build/examples
+sourcepath = ${jpf-symbc-bounded}/src/examples
+
+target = symbolicheap.bounded.AvlTree
+symbolic.method = symbolicheap.bounded.AvlTree.concreteRepOK(con);
+
+#----------------------------------------------------------------------
+symbolic.green = false
+symbolic.solver.slicing = true
+symbolic.solver.canonization = true
+symbolic.solver.dp = z3
+#symbolic.solver.dp = choco
+symbolic.solver.mc = latte
+symbolic.solver.mc.tool = /Users/jaco/Documents/workspace/jpf-probsym/lib/count.osx2
+symbolic.solver.store = redis
+
+#----------------------------------------------------------------------
+symbolic.dp = z3
+#symbolic.dp = choco
+symbolic.lazy = true
+symbolic.lazy.bounded = true
+symbolic.lazy.subtypes = true
+symbolic.lazy.refine = true
+symbolic.lazy.bounddb = ${sourcepath}/symbolicheap/bounded/bounddb/AvlTree-10.txt
+symbolic.lazy.limit = 10
+symbolic.lazy.useauxsolver = true
+symbolic.lazy.useauxsolver.debug = false
+symbolic.lazy.pvarsdb = ${sourcepath}/symbolicheap/bounded/bounddb/AvlTree-10.pvars
+
+#----------------------------------------------------------------------
+vm.storage.class=nil
+listener = gov.nasa.jpf.symbc.heap.bounded.HeapSymbolicListenerBounded3
+#listener = gov.nasa.jpf.symbc.heap.HeapSymbolicListener
+#jvm.insn_factory.class = gov.nasa.jpf.symbc.SymbolicInstructionFactory
+jvm.insn_factory.class = gov.nasa.jpf.symbc.SymbolicInstructionFactoryBounded

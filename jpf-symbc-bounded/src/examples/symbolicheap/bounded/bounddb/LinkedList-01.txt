@@ -1,0 +1,10 @@
+#LinkedList_0
+@header
+@next
+@previous
+LinkedList/LinkedList_0/header/null
+LinkedList/LinkedList_0/header/LinkedListNode_0
+LinkedListNode/LinkedListNode_0/next/null
+LinkedListNode/LinkedListNode_0/next/LinkedListNode_0
+LinkedListNode/LinkedListNode_0/prev/null
+LinkedListNode/LinkedListNode_0/prev/LinkedListNode_0

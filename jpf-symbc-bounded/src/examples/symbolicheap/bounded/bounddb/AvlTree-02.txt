@@ -1,0 +1,9 @@
+#AvlTree_0
+@left
+@right
+AvlTree/AvlTree_0/left/AvlTree_1
+AvlTree/AvlTree_0/left/null
+AvlTree/AvlTree_0/right/AvlTree_1
+AvlTree/AvlTree_0/right/null
+AvlTree/AvlTree_1/left/null
+AvlTree/AvlTree_1/right/null

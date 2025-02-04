@@ -1,0 +1,17 @@
+BinTree/BinTree_0/left/null/6
+BinTree/BinTree_0/left/BinTree_1/7
+BinTree/BinTree_1/left/null/8
+BinTree/BinTree_1/left/BinTree_2/9
+BinTree/BinTree_1/left/BinTree_3/10
+BinTree/BinTree_2/left/null/11
+BinTree/BinTree_2/left/BinTree_3/12
+BinTree/BinTree_3/left/null/13
+BinTree/BinTree_0/right/null/14
+BinTree/BinTree_0/right/BinTree_1/15
+BinTree/BinTree_0/right/BinTree_2/16
+BinTree/BinTree_1/right/null/17
+BinTree/BinTree_1/right/BinTree_2/18
+BinTree/BinTree_1/right/BinTree_3/19
+BinTree/BinTree_2/right/null/20
+BinTree/BinTree_2/right/BinTree_3/21
+BinTree/BinTree_3/right/null/22

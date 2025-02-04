@@ -1,0 +1,10 @@
+BinomialHeap/BinomialHeap_0/Nodes/null/11
+BinomialHeap/BinomialHeap_0/Nodes/BinomialHeapNode_0/12
+BinomialHeapNode/BinomialHeapNode_0/child/null/1
+BinomialHeapNode/BinomialHeapNode_0/child/BinomialHeapNode_1/2
+BinomialHeapNode/BinomialHeapNode_1/child/null/3
+BinomialHeapNode/BinomialHeapNode_1/parent/BinomialHeapNode_0/21
+BinomialHeapNode/BinomialHeapNode_0/parent/null/22
+BinomialHeapNode/BinomialHeapNode_1/parent/null/23
+BinomialHeapNode/BinomialHeapNode_0/sibling/null/30
+BinomialHeapNode/BinomialHeapNode_1/sibling/null/31

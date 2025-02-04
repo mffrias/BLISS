@@ -1,0 +1,213 @@
+package symbolicheap.bounded;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import gov.nasa.jpf.jvm.Verify;
+import gov.nasa.jpf.symbc.Debug;
+
+public class BinTree {
+
+	public static final BinTree SYMBOLICBINTREE = new BinTree();
+	public static final int SYMBOLICINT = (int) Integer.MIN_VALUE;
+
+	public int key;
+	
+	public BinTree left;
+	
+	public BinTree right;
+
+	public BinTree(int key) {
+		this.key = key;
+		left = right = null;
+	}
+
+	private BinTree left() {
+		return left;
+	}
+
+	private BinTree right() {
+		return right;
+	}
+	
+	public BinTree() {}
+
+	
+	// Hybrid invariant that tolerates partially symbolic structures
+
+	public boolean hybridRepOK() {
+		if (this == SYMBOLICBINTREE)
+			return true;
+
+		Set<BinTree> visited = new HashSet<BinTree>();
+		List<BinTree> worklist = new ArrayList<BinTree>();
+
+		visited.add(this);
+		worklist.add(this);
+
+		while (!worklist.isEmpty()) {
+			BinTree node = worklist.remove(0);
+
+			BinTree left = node.left;
+			if (left != null && left != SYMBOLICBINTREE) {
+				if (!visited.add(left))
+					return false;
+
+				worklist.add(left);
+			}
+			
+			BinTree right = node.right;
+			if (right != null && right != SYMBOLICBINTREE) {
+				if (!visited.add(right))
+					return false;
+
+				worklist.add(right);
+			}			
+		}
+
+		return visited.size() <= LIMIT;
+//		return true;
+	}
+	
+	public boolean contains(BinTree root, int key) {
+		if (root == null)
+			return false;
+		else {
+			if (root.key == key){
+				return true;
+			} else {
+				return contains(root.left, key) || contains(root.right, key);
+			}
+				
+		}
+	}
+	
+	
+	public int count(BinTree root) {
+		int n = 1;
+		if (left != null) { n += left.count(root); }
+		if (right != null) { n += right.count(root); }
+		return n;
+	}
+
+	
+	
+	
+	public void bfsTraverse(BinTree root){
+		Set<BinTree> visited = new HashSet<BinTree>();
+		List<BinTree> worklist = new ArrayList<BinTree>();
+		visited.add(root);
+		worklist.add(root);
+		while (!worklist.isEmpty() && visited.size() <= LIMIT) {
+			BinTree node = worklist.remove(0);
+			BinTree left = node.left;
+			if (left != null && visited.add(left)) {
+
+				worklist.add(left);
+			}
+			BinTree right = node.right;
+			if (right != null && visited.add(right)) {
+				worklist.add(right);
+			}
+		} 
+	}
+
+
+	//--------------------------------------bfsTraverse-end-------------------------------------//
+
+
+	//--------------------------------------dfsTraverse-begin-------------------------------------//
+
+
+	public boolean dfsTraverse(BinTree root){
+		HashSet<BinTree> visited = new HashSet<BinTree>();
+		dfsTraverseAux(root, visited);
+		return visited.size() <= LIMIT;
+	}
+
+
+	private void dfsTraverseAux(BinTree root, HashSet<BinTree> visited){
+		if (root != null && visited.add(root)){
+
+			if (root.left != null){
+				dfsTraverseAux(root.left, visited);
+			}
+			if (root.right != null){
+				dfsTraverseAux(root.right, visited);
+			}
+
+		}
+	}
+
+	//--------------------------------------dfsTraverse-end-------------------------------------//
+
+	
+	public boolean checkRefinement(BinTree root) {
+		if (root != null) {
+			if (root.left() != null) {
+				if (root.right() != null) {
+					if (root.right().left() != null) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean repOK_Concrete(BinTree root) {
+		Set<BinTree> visited = new HashSet<BinTree>();
+		List<BinTree> worklist = new ArrayList<BinTree>();
+		visited.add(root);
+		worklist.add(root);
+		while (!worklist.isEmpty()) {
+			BinTree node = worklist.remove(0);
+			BinTree left = node.left();
+			if (left != null) {
+				if (!visited.add(left)) {
+					return false;
+				}
+				worklist.add(left);
+			}
+			BinTree right = node.right();
+			if (right != null) {
+				if (!visited.add(right)) {
+					return false;
+				}
+				worklist.add(right);
+			}
+		}
+		return visited.size() <= LIMIT;
+	}
+	
+	
+	
+	public void dumpStructure(BinTree root) { }
+
+	public void countStructure(BinTree root) { }
+	
+	
+
+	private static final int LIMIT = __SIZE__;
+
+        public static void main(String[] args) {
+
+                BinTree X = new BinTree(10);
+                // X = (BinTree) Debug.makeSymbolicRef("X", X);
+                X = (BinTree) Debug.makeSymbolicRefBounded("X", X);
+
+                if (X != null) {
+                        try {
+                                X.dfsTraverse(X);
+                                X.countStructure(X);
+                        } catch (Exception e) {
+				// Ignored!
+			}
+                }
+
+        }
+
+}
+

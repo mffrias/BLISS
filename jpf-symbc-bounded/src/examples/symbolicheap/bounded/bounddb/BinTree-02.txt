@@ -1,0 +1,9 @@
+#BinTree_0
+@left
+@right
+BinTree/BinTree_0/left/BinTree_1
+BinTree/BinTree_0/left/null
+BinTree/BinTree_0/right/BinTree_1
+BinTree/BinTree_0/right/null
+BinTree/BinTree_1/left/null
+BinTree/BinTree_1/right/null

@@ -1,0 +1,8 @@
+#CacheList_0
+@listHeader
+@cacheHeader
+@listNext
+@listPrevious
+CacheList/CacheList_0/listHeader/CacheListNode_0
+CacheListNode/CacheListNode_0/listNext/CacheListNode_0
+CacheListNode/CacheListNode_0/listPrevious/CacheListNode_0

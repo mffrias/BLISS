@@ -1,0 +1,35 @@
+classpath = ${jpf-symbc-bounded}/build/examples
+sourcepath = ${jpf-symbc-bounded}/src/examples
+
+target = symbolicheap.bounded.CacheList
+symbolic.method = symbolicheap.bounded.CacheList.concreteRepOK(con);
+
+#----------------------------------------------------------------------
+symbolic.green = false
+symbolic.solver.slicing = true
+symbolic.solver.canonization = true
+symbolic.solver.dp = cvc3
+symbolic.solver.mc = latte
+symbolic.solver.mc.tool = /Users/jaco/Documents/workspace/jpf-probsym/lib/count.osx2
+symbolic.solver.store = redis
+
+#----------------------------------------------------------------------
+symbolic.dp = cvc3
+symbolic.dp = cvc3
+symbolic.lazy = true
+symbolic.lazy.subtypes = true
+symbolic.bounded = false
+symbolic.lazy.refine = false
+symbolic.lazy.bounddb = ${sourcepath}/symbolicheap/bounded/bounddb/CacheList-__SIZE__.txt
+symbolic.lazy.limit = __SIZE__
+symbolic.lazy.useauxsolver = false
+symbolic.lazy.useauxsolver.debug = false
+symbolic.lazy.pvarsdb = ${sourcepath}/symbolicheap/bounded/bounddb/CacheList-__SIZE__.pvars
+symbolic.lazy.satdb = false
+symbolic.lazy.satdb.debug = false
+
+#----------------------------------------------------------------------
+vm.storage.class=nil
+listener = gov.nasa.jpf.symbc.heap.bounded.HeapSymbolicListenerBounded3
+vm.insn_factory.class = gov.nasa.jpf.symbc.SymbolicInstructionFactory
+#vm.insn_factory.class = gov.nasa.jpf.symbc.SymbolicInstructionFactoryBounded

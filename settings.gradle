@@ -1,0 +1,13 @@
+plugins {
+    id 'com.gradle.enterprise' version '3.13.4'
+}
+
+rootProject.name = 'SPF'
+
+include ':jpf-core'
+include ':jpf-symbc'
+include ':jpf-symbc-bounded'
+
+println project(':jpf-core').name
+println project(':jpf-symbc').name
+println project(':jpf-symbc-bounded').name

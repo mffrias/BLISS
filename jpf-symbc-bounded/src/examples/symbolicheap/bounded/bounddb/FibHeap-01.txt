@@ -1,0 +1,13 @@
+#FibHeap_0
+@min
+@left
+@child
+@right
+FibHeap/FibHeap_0/min/null
+FibHeap/FibHeap_0/min/FibHeapNode_0
+FibHeapNode/FibHeapNode_0/left/null
+FibHeapNode/FibHeapNode_0/left/FibHeapNode_0
+FibHeapNode/FibHeapNode_0/child/null
+FibHeapNode/FibHeapNode_0/right/null
+FibHeapNode/FibHeapNode_0/right/FibHeapNode_0
+FibHeapNode/FibHeapNode_0/parent/null

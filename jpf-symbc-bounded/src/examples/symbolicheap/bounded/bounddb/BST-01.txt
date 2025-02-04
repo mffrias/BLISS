@@ -1,0 +1,3 @@
+#BST_0
+BST/BST_0/left/null
+BST/BST_0/right/null

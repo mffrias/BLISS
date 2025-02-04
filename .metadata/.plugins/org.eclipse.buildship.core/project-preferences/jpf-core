@@ -1,0 +1,12 @@
+#
+#Mon Jan 27 19:22:43 MST 2025
+buildDir=build
+buildScriptPath=build.gradle
+classpath=<?xml version\="1.0" encoding\="UTF-8"?>\n<classpath>\n<classpathentry kind\="lib" path\="/Users/mfrias/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.5/dc6ea1875f4d64fbc85e1691c95b96a3d8569c90/asm-9.5.jar" sourcepath\="/Users/mfrias/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.5/75c1feea760d9b5c12394bf366bdd9bd65ce4c83/asm-9.5-sources.jar">\n\t<attributes>\n\t\t<attribute name\="gradle_used_by_scope" value\="test"/>\n\t\t<attribute name\="test" value\="true"/>\n\t</attributes>\n</classpathentry>\n<classpathentry kind\="lib" path\="/Users/mfrias/.gradle/caches/modules-2/files-2.1/junit/junit/4.13.1/cdd00374f1fee76b11e2a9d127405aa3f6be5b6a/junit-4.13.1.jar" sourcepath\="/Users/mfrias/.gradle/caches/modules-2/files-2.1/junit/junit/4.13.1/523bdce923a13622132b263550d06519fc591ec4/junit-4.13.1-sources.jar">\n\t<attributes>\n\t\t<attribute name\="gradle_used_by_scope" value\="test"/>\n\t\t<attribute name\="test" value\="true"/>\n\t</attributes>\n</classpathentry>\n<classpathentry kind\="lib" path\="/Users/mfrias/.gradle/caches/modules-2/files-2.1/org.hamcrest/hamcrest-core/1.3/42a25dc3219429f0e5d060061f71acb49bf010a0/hamcrest-core-1.3.jar" sourcepath\="/Users/mfrias/.gradle/caches/modules-2/files-2.1/org.hamcrest/hamcrest-core/1.3/1dc37250fbc78e23a65a67fbbaf71d2e9cbc3c0b/hamcrest-core-1.3-sources.jar">\n\t<attributes>\n\t\t<attribute name\="gradle_used_by_scope" value\="test"/>\n\t\t<attribute name\="test" value\="true"/>\n\t</attributes>\n</classpathentry>\n<classpathentry kind\="lib" path\="/Users/mfrias/eclipse-workspace-new/bliss-Veronica-Rivas/BLISS/jpf-core/lib/commons-lang3-3.1.jar">\n\t<attributes>\n\t\t<attribute name\="gradle_used_by_scope" value\="main,test"/>\n\t</attributes>\n</classpathentry>\n</classpath>\n
+derivedResources=.gradle\:build
+gradleVersion=8.4
+hasAutoBuildTasks=false
+linkedResources=
+managedBuilders=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?><commands/>
+managedNatures=
+subprojectPaths=

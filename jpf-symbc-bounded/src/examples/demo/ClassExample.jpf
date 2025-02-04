@@ -1,0 +1,11 @@
+target=demo.ClassExample
+classpath=${jpf-symbc}/build/examples
+sourcepath=${jpf-symbc}/src/examples
+symbolic.method = demo.ClassExample.test(con#sym)
+symbolic.min_int=-100
+symbolic.max_int=100
+symbolic.dp=choco
+#symbolic.dp=z3
+listener = .symbc.SymbolicListener
+
+search.multiple_errors=true
