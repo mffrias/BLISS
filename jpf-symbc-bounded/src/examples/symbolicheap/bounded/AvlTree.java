@@ -6,18 +6,56 @@ import java.util.List;
 import java.util.Set;
 
 import gov.nasa.jpf.symbc.DebugBounded;
-import gov.nasa.jpf.vm.Verify;
 
 public class AvlTree {
 
-	// Stubs to be intercepted at the bytecode level
-	public void countStructure(AvlTree root) {}
-	public void dumpRootStructure(AvlTree root) {
-	}
+	
 
 	// Extra fields to support execution of hybridRepOK
 	public static final AvlTree SYMBOLICAVLTREE = new AvlTree();
 	public static final int SYMBOLICINT = (int) Integer.MIN_VALUE;
+
+
+
+	// Private members
+
+	public int element;
+	public int height;
+	public AvlTree left;
+	public AvlTree right;
+
+
+	// Constructors
+
+	public AvlTree() {
+		this.element = 0;
+		this.height = 0;
+		this.left = this.right = null;
+	}
+
+	public AvlTree(int element) {
+		this.element = element;
+		this.height = 1;
+		this.left = this.right = null;
+	}
+
+	public AvlTree(int element, int height, AvlTree left, AvlTree right) {
+		this.element = element;
+		this.height = height;
+		this.left = left;
+		this.right = right;
+	}
+
+
+	// Projectors
+
+	public AvlTree left() {
+		return left;
+	}
+
+	public AvlTree right() {
+		return right;
+	}
 
 	// Hybrid invariant that tolerates partially symbolic structures
 
@@ -67,48 +105,6 @@ public class AvlTree {
 		return visited.size() <= LIMIT;
 		//		return true;
 	}
-
-
-	// Private members
-
-	public int element;
-	public int height;
-	public AvlTree left;
-	public AvlTree right;
-
-
-	// Constructors
-
-	public AvlTree() {
-		this.element = 0;
-		this.height = 0;
-		this.left = this.right = null;
-	}
-
-	public AvlTree(int element) {
-		this.element = element;
-		this.height = 1;
-		this.left = this.right = null;
-	}
-
-	public AvlTree(int element, int height, AvlTree left, AvlTree right) {
-		this.element = element;
-		this.height = height;
-		this.left = left;
-		this.right = right;
-	}
-
-
-	// Projectors
-
-	public AvlTree left() {
-		return left;
-	}
-
-	public AvlTree right() {
-		return right;
-	}
-
 
 
 	// ========= Methods to be verified ===================================
@@ -236,12 +232,14 @@ public class AvlTree {
 	 * rotation for case 4. Update heights, then return new root.
 	 */
 	private static AvlTree rotateWithRightChild(final AvlTree k1) {
+		System.out.println("en rotateWithRightChild");
 		final AvlTree k2 = k1.right;
 		k1.right = k2.left;
 		k2.left = k1;
 		k1.height = AvlTree.max(AvlTree.height(k1.left), AvlTree
 				.height(k1.right)) + 1;
 		k2.height = AvlTree.max(AvlTree.height(k2.right), k1.height) + 1;
+		System.out.println("new root is "+k2.hashCode());
 		return k2;
 	}
 
@@ -414,7 +412,7 @@ public class AvlTree {
 			rh = node.right.height;
 
 		int difference = lh - rh;
-		if (difference < -1 || difference > 1){
+		if ((difference < -1) || (difference > 1)){
 			return false; // Not balanced!
 		}
 
@@ -513,43 +511,37 @@ public class AvlTree {
 		if(level != 0){
 			for(int i = 0; i < level - 1; i++)
 				System.out.print("\t");
-			//			System.out.println("|-------" + root.element);
+//			System.out.println("|-------" + root.element);
 			System.out.println("|-------" + root.hashCode());
 		}
 		else
-			//			System.out.println(root.element);
+//			System.out.println(root.element);
 			System.out.println(root.hashCode());
 		dumpTree(root.left, level+1);
 	}
 
+	
+	
 	// ~~~~~~~~~ End of dumpTree ~~~~~~~~~~
 
-
-	public void myMethodTest(AvlTree avl) {
-		if (avl != null)
-			avl = avl.left;
-	}
-
-	//marked in tables as repOK_Concrete
-	private static int LIMIT = 10;
-	public static void main(String[] args) {
-
-		AvlTree X = new AvlTree(10);
-//		X = (AvlTree) DebugBounded.makeSymbolicRef("X", X);
-		X = (AvlTree) DebugBounded.makeSymbolicRefBounded("X", X);
+	// Stubs to be intercepted at the bytecode level
+		public void countStructure(AvlTree root) { }
 		
-		if (X != null) {
-			try {
-				X.insert(X, 5);
-				
-			} catch (Exception e) {
-				X.dumpRootStructure(X);
-			}
-			X.countStructure(X);
-		}
+		public void dumpStructure(AvlTree root) { }
 
-	}
 
+        private static final int LIMIT = 5;
+        
+        public static void main(String[] args) {
+
+                AvlTree X = new AvlTree(10);
+                X = (AvlTree) DebugBounded.makeSymbolicRef("X", X);
+//                X = (AvlTree) DebugBounded.makeSymbolicRefBounded("X", X);
+
+                if (X != null && X.repOK_Concrete(X)) {
+        			X.dumpStructure(X);
+        		}
+        }
 
 
 

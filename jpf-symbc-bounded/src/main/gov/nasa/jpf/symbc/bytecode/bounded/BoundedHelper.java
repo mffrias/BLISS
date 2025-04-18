@@ -690,7 +690,7 @@ public class BoundedHelper {
 		//			showHeap(hcgb, ti);
 		//		}
 
-		System.out.println("ENTERED ProcessHeapWithSolver");
+//		System.out.println("ENTERED ProcessHeapWithSolver");
 		StringBuilder sb = new StringBuilder();	
 
 		List<Integer> facts = new LinkedList<Integer>();
@@ -812,7 +812,7 @@ public class BoundedHelper {
 			//try {
 				t0 = System.currentTimeMillis();
 				//boolean verdict = HeapChoiceGeneratorBounded.auxSolver.isSatisfiable(assumptions);
-				System.out.println("SOLVER INVOKED");
+//				System.out.println("SOLVER INVOKED");
 				boolean verdict = HeapChoiceGeneratorBounded.auxSolver.solve(assumptions);
 
 

@@ -227,8 +227,8 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 		}
 		else {
 			pcHeap = ((HeapChoiceGeneratorBounded)prevHeapCG).getCurrentPCheap();
-			if (pcHeap != null)
-				System.out.println(pcHeap.stringPC());
+//			if (pcHeap != null)
+//				System.out.println(pcHeap.stringPC());
 			symInputHeap = ((HeapChoiceGeneratorBounded)prevHeapCG).getCurrentSymInputHeap();
 		}
 
@@ -238,9 +238,11 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 
 		assert pcHeap != null;
 		assert symInputHeap != null;
+		assert symInputHeap.count() > 0;
 
 		HeapNode hnb = symInputHeap.getNodeByIndex(objRef);
 		ClassInfo sourceType = hnb.getType();
+//		System.out.println("passed");
 		BoundsMap bounds = HeapChoiceGeneratorBounded.getBounds();
 
 		//		prevSymRefs = symInputHeap.getIntersectingNodesOfType(typeClassInfo, hnb, fi.getName(), bounds);
@@ -342,7 +344,6 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 			if (refine != null && refine[0].equalsIgnoreCase("true")){
 				if (!BoundedHelper.refineHeap(symInputHeap, ti)){
 					ti.getVM().getSystemState().setIgnored(true);
-					System.out.println("-refine");
 					return this;
 				}
 				String[] useBLISS = conf.getStringArray("symbolic.lazy.useauxsolver");
@@ -350,7 +351,6 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 					HeapSymbolicListenerBounded3.numOfSolverCalls++;
 					if (!BoundedHelper.processHeapWithSolver(symInputHeap, ti)){						
 						ti.getVM().getSystemState().setIgnored(true);
-						System.out.println("-bliss");
 						return this;
 					}
 				}

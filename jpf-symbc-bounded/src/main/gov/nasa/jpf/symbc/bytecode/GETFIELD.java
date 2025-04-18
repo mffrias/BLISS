@@ -207,7 +207,7 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 			daIndex = MJIEnv.NULL;//-1;
 			symInputHeap.setPointsToIndexThroughField(objRef, fi.getName(), MJIEnv.NULL);
 		}
-		else if (currentChoice == (numSymRefs + 1) && !abstractClass) {
+		else if (currentChoice == (numSymRefs + 1) && !abstractClass) {  
 			// creates a new object with all fields symbolic and adds the object to SymbolicHeap
 
 			daIndex = Helper.addNewHeapNode(typeClassInfo, ti, attr, pcHeap,
