@@ -83,7 +83,7 @@ public class BinHeap {
 		}
 
 		return size == seen.size() && size <= LIMIT;
-		
+
 	}
 
 
@@ -98,7 +98,7 @@ public class BinHeap {
 			if (!isAcyclic(root, seen)){
 				return false;
 			}
-				
+
 			// esta ordenado el arbol que cuelga de root?
 			if (!ordered(root)){
 				return false;
@@ -148,7 +148,7 @@ public class BinHeap {
 			}
 
 		}
-		
+
 		return size == seen.size();
 	}
 
@@ -234,6 +234,7 @@ public class BinHeap {
 
 		BinHeap currchild = start.child;
 
+
 		int child_count = 0;
 
 		while (currchild!=null) {
@@ -242,6 +243,7 @@ public class BinHeap {
 			if (currchild.parent != start){
 				return false;
 			}
+
 			if (!isAcyclic(currchild, seen)){
 				return false;
 			}
@@ -334,7 +336,7 @@ public class BinHeap {
 				}
 				child = child.sibling;
 			}
-			
+
 			if (child == SYMBOLICBINHEAP){
 				return true;
 			}
@@ -497,9 +499,9 @@ public class BinHeap {
 			}
 		}
 
-//		if (size==12) {
-//			System.out.println("Size 12 structure reached.");
-//		}
+		//		if (size==12) {
+		//			System.out.println("Size 12 structure reached.");
+		//		}
 
 		return Nodes;
 	}
@@ -516,15 +518,15 @@ public class BinHeap {
 	}
 
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
 	public static void dumpHeap(BinHeap root) {
 		System.out.println("");
 		System.out.println("");
@@ -539,29 +541,29 @@ public class BinHeap {
 		if(level != 0){
 			for(int i = 0; i < level - 1; i++)
 				System.out.print("\t");
-//			System.out.println("|-------" + root.element);
+			//			System.out.println("|-------" + root.element);
 			System.out.println("|---" + str + "----" + root.hashCode());
 		}
 		else
-//			System.out.println(root.element);
+			//			System.out.println(root.element);
 			System.out.println(root.hashCode());
 		dumpHeap(root.sibling, level+1, "sibling");
 		dumpHeap(root.child, level+1, "child");
 
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
 
 	private BinHeap unionNodes_extractMin(BinHeap binHeap, BinHeap Nodes) {
-		
+
 		Nodes = Nodes.merge_extractMin(binHeap, Nodes);
 
 		BinHeap prevTemp = null, temp = Nodes , nextTemp = Nodes.sibling;
@@ -660,105 +662,30 @@ public class BinHeap {
 		return y;
 	}
 
-	public void dumpStructure(BinHeap root) {
+	public void dumpRootStructure(BinHeap root) {
 	}
 
 	public void countStructure(BinHeap root) {
 	}
 
 
-	private static final int LIMIT = 13;
+
+
+	private static final int LIMIT = 10;
 	public static void main(String[] args) {
 		BinHeap X = new BinHeap();
 		X = (BinHeap) DebugBounded.makeSymbolicRefBounded("X", X);
-//		X = (BinHeap) DebugBounded.makeSymbolicRef("X", X);
-		//		int key = 1000;
-		
-//		BinHeap N1 = new BinHeap();
-//		BinHeap N2 = new BinHeap();
-//		
-//		X.sibling = N1;
-//		N1.sibling = null;
-//		X.child = null;
-//		N1.child = N2;
-//		N1.degree = 1;
-//		N2.parent = N1;
-//		size = 3;
-//		X.key = 1;
-//		N1.key = 10;
-//		N2.key = 20;
-		if (X != null && X.repOK_Concrete(X)) {
-			X.dumpStructure(X);
-//			X = X.extractMin(X);
-//			if (X != null)
-//				X.countStructure(X);
-//			if (X != null && !X.repOK_ConcretePost(X)){				
-//				BinHeap.dumpHeap(X);
-//				X.dumpStructure(X);
-//				if (size >= 12){
-//					System.out.println("This is a good candidate");
-//				}
-//			}
-		} 	
+		//		X = (BinHeap) DebugBounded.makeSymbolicRef("X", X);
+
+		try {
+			if (X != null && X.repOK_Concrete(X)) {
+				X.dumpRootStructure(X);
+			}
+		} catch (RuntimeException e) {
+			System.out.print("Cyclic or broken: ");
+			X.dumpRootStructure(X);
+		}
 	}
-
-
-
-		
-
-
-//	private static final int LIMIT = 8;
-//
-//	public static void main(String[] args) {
-//		BinHeap X = new BinHeap();
-//		//		X = (BinHeap) Debug.makeSymbolicRefBounded("X", X);
-//		X = (BinHeap) Debug.makeSymbolicRef("X", X);
-//		try {
-//			if (X != null){
-//				BinHeap b = X.findMinNode_extractMin(X);
-//				X.countStructure(X);
-//			}	
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//
-//	}
-
-
-//	private static final int LIMIT = 8;
-//	public static void main(String[] args) {
-//		BinHeap b0 = new BinHeap();
-//		BinHeap b1 = new BinHeap();
-//		BinHeap b2 = new BinHeap();
-//		BinHeap b3 = new BinHeap();
-//		b0.child = b1;
-//		b0.sibling = null;
-//		b0.parent = null;
-//		b0.key = 0;
-//		b0.degree = 2;
-//		b1.child = b2;
-//		b1.sibling = b3;
-//		b1.parent = b0;
-//		b1.key = 5;
-//		b1.degree = 1;
-//		b2.child = null;
-//		b2.sibling = null;
-//		b2.parent = b1;
-//		b2.key = 10;
-//		b2.degree = 0;
-//		b3.child = null;
-//		b3.sibling = null;
-//		b3.parent = b0;
-//		b3.key = 7;
-//		b3.degree = 0;
-//
-//		if (b0.repOK_Concrete(b0)){
-//			System.out.println("vale");
-//		} else {
-//			System.out.println("No vale");
-//		}
-//		
-//	}
-//	
+	//	
 }
 

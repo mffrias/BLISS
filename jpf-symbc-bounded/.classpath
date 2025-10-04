@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="src" output="build/main" path="src/main">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="jpf-symbc-bounded/lib"/>
 			<attribute name="gradle_scope" value="main"/>
 			<attribute name="gradle_used_by_scope" value="main,test"/>
 		</attributes>
@@ -16,28 +15,24 @@
 	</classpathentry>
 	<classpathentry kind="src" output="build/annotations" path="src/annotations">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="jpf-symbc-bounded/lib"/>
 			<attribute name="gradle_scope" value="annotations"/>
 			<attribute name="gradle_used_by_scope" value="test,annotations"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" output="build/classes" path="src/classes">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="jpf-symbc-bounded/lib"/>
 			<attribute name="gradle_scope" value="classes"/>
 			<attribute name="gradle_used_by_scope" value="test,classes"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" output="build/examples" path="src/examples">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="jpf-symbc-bounded/lib"/>
 			<attribute name="gradle_scope" value="examples"/>
 			<attribute name="gradle_used_by_scope" value="examples"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" output="build/peers" path="src/peers">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="jpf-symbc-bounded/lib"/>
 			<attribute name="gradle_scope" value="peers"/>
 			<attribute name="gradle_used_by_scope" value="test,peers"/>
 		</attributes>
@@ -47,7 +42,11 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
+	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="jpf-symbc-bounded/lib"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/jpf-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/jpf-symbc"/>
 	<classpathentry kind="output" path="build-default"/>

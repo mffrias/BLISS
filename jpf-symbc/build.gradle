@@ -61,6 +61,11 @@ dependencies {
     
 }
 
+
+tasks.withType(JavaExec) {
+        systemProperty 'java.library.path', '/Users/drfrias/Documents/eclipse-workspace-new/bliss-Veronica-Rivas/BLISS/jpf-symbc-bounded/lib'
+    }
+
 compileTestJava.dependsOn copyResources
 compileExamplesJava.dependsOn copyResources
 compilePeersJava.dependsOn copyResources

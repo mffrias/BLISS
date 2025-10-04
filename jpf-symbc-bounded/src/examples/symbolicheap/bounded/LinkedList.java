@@ -713,21 +713,22 @@ public class LinkedList {
 	//	}
 
 
-	public static int LIMIT = 15;
+	public void dumpRootStructure(LinkedList l) {
+	}
 
+	public static int LIMIT = 15;
 	public static void main(String[] args) {
+
 		LinkedList L = new LinkedList();
-		 L = (LinkedList) DebugBounded.makeSymbolicRef("L", L);
-//		L = (LinkedList) Debug.makeSymbolicRefBounded("L", L);
+		//		 L = (LinkedList) DebugBounded.makeSymbolicRef("L", L);
+		L = (LinkedList) DebugBounded.makeSymbolicRefBounded("L", L);
 
 		try {
-			if (L != null){
-				if (L.repOK_Concrete()) {
-					L.dumpStructure(L.header);
-				}
+			if (L != null) {
+				L.repOK_Concrete();
+				L.dumpRootStructure(L);
 			}
 		} catch (Exception e) {
-			// Ignored!
 		}
 	}
 }

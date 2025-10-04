@@ -1,3 +1,7 @@
+Importat: In order to run using the z3 SMT-solver, run
+export DYLD_LIBRARY_PATH=/... path/to//jpf-symbc-bounded/lib
+
+
 # Symbolic PathFinder (SPF)
 ![build SPF](https://github.com/gaurangkudale/SPF/actions/workflows/main.yml/badge.svg)
 

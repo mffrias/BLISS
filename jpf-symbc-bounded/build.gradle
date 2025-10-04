@@ -39,8 +39,9 @@ dependencies {
     // Path of jpf-core build directory is declared as a dependencies for jpf-symbc (Line 35-37)
     def jpfLibs = fileTree("${project(':jpf-core').buildDir}") { include '*.jar' }
     def jpfSymbcLibs = fileTree("${project(':jpf-symbc').buildDir}") { include '*.jar' }
+    def jpfSymbcBoundedLibs = fileTree("${project(':jpf-symbc-bounded').buildDir}") { include '*.jar' }
     def extLibs = fileTree(dir: 'lib', include: ['*.jar'])
-    def libs = extLibs + jpfLibs + jpfSymbcLibs
+    def libs = extLibs + jpfLibs + jpfSymbcLibs + jpfSymbcBoundedLibs
     
     //Following dependencies are pulled from mavenCentral() repositories
     

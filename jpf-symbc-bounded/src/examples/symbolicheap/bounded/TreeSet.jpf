@@ -8,14 +8,14 @@ symbolic.method = symbolicheap.bounded.TreeSet.concreteRepOK(con);
 symbolic.green = false
 symbolic.solver.slicing = true
 symbolic.solver.canonization = true
-symbolic.solver.dp = cvc3
+symbolic.solver.dp = z3
 symbolic.solver.mc = latte
 symbolic.solver.mc.tool = /Users/jaco/Documents/workspace/jpf-probsym/lib/count.osx2
 symbolic.solver.store = redis
 
 #----------------------------------------------------------------------
 
-symbolic.dp = cvc3
+symbolic.dp = z3
 symbolic.lazy = true
 symbolic.bounded = false
 symbolic.lazy.subtypes = true

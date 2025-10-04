@@ -39,7 +39,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="new root is"/>
+			<item key="textPattern" value="-bliss"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -55,7 +55,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="Here!"/>
+			<item key="textPattern" value="JPF out of memory"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -67,7 +67,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="Embedded"/>
+			<item key="textPattern" value="maxUsed"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -79,7 +79,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="cvc3jni"/>
+			<item key="textPattern" value="max memory:"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -91,7 +91,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="SystemUtils"/>
+			<item key="textPattern" value="statistics"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -103,7 +103,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="linux"/>
+			<item key="textPattern" value="====================================================== statistics"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -115,7 +115,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="start("/>
+			<item key="textPattern" value="128"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -127,7 +127,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="SymbolicConstraintsGeneral"/>
+			<item key="textPattern" value="128MB"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -139,7 +139,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="SymbolicCnostraintsGeneral"/>
+			<item key="textPattern" value="uniqueStructureCount"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -151,7 +151,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="getSolvedPC"/>
+			<item key="textPattern" value="-refine"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -163,7 +163,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="solve"/>
+			<item key="textPattern" value="println"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -175,7 +175,7 @@
 			<item key="ignoreCase" value="true"/>
 			<item key="isRegExSearch" value="false"/>
 			<item key="isWholeWord" value="false"/>
-			<item key="textPattern" value="HeapSymbolicListenerBounded3"/>
+			<item key="textPattern" value="HeapChoiceGeneratorBounded"/>
 			<item key="scope" value="0"/>
 			<list key="fileNamePatterns">
 				<item value="*.*"/>
@@ -189,6 +189,10 @@
 	</section>
 	<section name="org.eclipse.search.text.FileSearchResultPage">
 		<item key="org.eclipse.search.resultpage.limit" value="1000"/>
+	</section>
+	<section name="org.eclipse.jdt.ui.JavaSearchResultPage">
+		<item key="org.eclipse.jdt.search.resultpage.limit" value="1000"/>
+		<item key="org.eclipse.jdt.search.resultpage.limit_enabled" value="TRUE"/>
 	</section>
 	<section name="">
 		<item key="org.eclipse.search.resultpage.limit" value="1000"/>

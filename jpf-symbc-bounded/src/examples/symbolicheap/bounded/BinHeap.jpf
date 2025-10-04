@@ -20,13 +20,13 @@ symbolic.dp = z3
 #symbolic.dp = choco
 symbolic.lazy = true
 symbolic.lazy.subtypes = true
-symbolic.bounded = true
+symbolic.lazy.bounded = true
 symbolic.lazy.refine = true
-symbolic.lazy.bounddb = ${sourcepath}/symbolicheap/bounded/bounddb/BinHeap-13.txt
-symbolic.lazy.limit = 13
+symbolic.lazy.bounddb = ${sourcepath}/symbolicheap/bounded/bounddb/BinHeap-10.txt
+symbolic.lazy.limit = 10
 symbolic.lazy.useauxsolver = true
 symbolic.lazy.useauxsolver.debug = false
-symbolic.lazy.pvarsdb = ${sourcepath}/symbolicheap/bounded/bounddb/BinHeap-13.pvars
+symbolic.lazy.pvarsdb = ${sourcepath}/symbolicheap/bounded/bounddb/BinHeap-10.pvars
 symbolic.lazy.satdb = false
 symbolic.lazy.satdb.debug = false
 

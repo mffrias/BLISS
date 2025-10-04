@@ -2,10 +2,10 @@
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
     <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-        <listEntry value="/jpf-core/src/main/gov/nasa/jpf/tool/RunJPF.java"/>
+        <listEntry value="/jpf-symbc-bounded"/>
     </listAttribute>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
-        <listEntry value="1"/>
+        <listEntry value="4"/>
     </listAttribute>
     <mapAttribute key="org.eclipse.debug.core.environmentVariables">
         <mapEntry key="DYLD_LIBRARY_PATH" value="/Users/mfrias/eclipse-workspace-new/bliss-Veronica-Rivas/BLISS/jpf-symbc-bounded/lib"/>
@@ -28,5 +28,5 @@
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="jpf-core"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="${resource_loc}"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="jpf-symbc-bounded"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1024m -ea -Djava.library.path=&quot;${workspace_loc:jpf-symbc-bounded}/lib:${env_var:PATH}&quot;"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1g -Xss512m -ea  -Djava.library.path=${project_loc}/lib"/>
 </launchConfiguration>

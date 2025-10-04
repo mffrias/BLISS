@@ -8,9 +8,9 @@
 	</classpathentry>
 	<classpathentry kind="src" output="build/test" path="src/tests">
 		<attributes>
-			<attribute name="test" value="true"/>
 			<attribute name="gradle_scope" value="test"/>
 			<attribute name="gradle_used_by_scope" value="test"/>
+			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" output="build/annotations" path="src/annotations">
@@ -19,7 +19,7 @@
 			<attribute name="gradle_used_by_scope" value="test,annotations"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry excluding="gov/nasa/jpf/symbc/Debug.java" kind="src" output="build/classes" path="src/classes">
+	<classpathentry kind="src" output="build/classes" path="src/classes">
 		<attributes>
 			<attribute name="gradle_scope" value="classes"/>
 			<attribute name="gradle_used_by_scope" value="test,classes"/>
@@ -31,20 +31,14 @@
 			<attribute name="gradle_used_by_scope" value="examples"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry excluding="gov/nasa/jpf/symbc/JPF_gov_nasa_jpf_symbc_Debug.java|gov/nasa/jpf/symbc/JPF_gov_nasa_jpf_symbc_DNN.java" kind="src" output="build/peers" path="src/peers">
+	<classpathentry kind="src" output="build/peers" path="src/peers">
 		<attributes>
 			<attribute name="gradle_scope" value="peers"/>
 			<attribute name="gradle_used_by_scope" value="test,peers"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11/">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11/"/>
 	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/jpf-core"/>
-	<classpathentry kind="lib" path="src/peers/gov/nasa/jpf/symbc/JPF_gov_nasa_jpf_symbc_Debug.java"/>
-	<classpathentry kind="lib" path="src/classes/gov/nasa/jpf/symbc/Debug.java"/>
 	<classpathentry kind="output" path="build-default"/>
 </classpath>

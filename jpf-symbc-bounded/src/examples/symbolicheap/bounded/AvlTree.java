@@ -527,20 +527,23 @@ public class AvlTree {
 	// Stubs to be intercepted at the bytecode level
 		public void countStructure(AvlTree root) { }
 		
+		public void termino() { }
+		
 		public void dumpStructure(AvlTree root) { }
 
 
-        private static final int LIMIT = 5;
+        private static final int LIMIT = 13;
         
         public static void main(String[] args) {
 
                 AvlTree X = new AvlTree(10);
-                X = (AvlTree) DebugBounded.makeSymbolicRef("X", X);
-//                X = (AvlTree) DebugBounded.makeSymbolicRefBounded("X", X);
+//                X = (AvlTree) DebugBounded.makeSymbolicRef("X", X);
+                X = (AvlTree) DebugBounded.makeSymbolicRefBounded("X", X);
 
                 if (X != null && X.repOK_Concrete(X)) {
         			X.dumpStructure(X);
         		}
+                X.termino();
         }
 
 

@@ -16,14 +16,14 @@ symbolic.solver.store = redis
 #----------------------------------------------------------------------
 symbolic.dp = z3
 symbolic.lazy = true
-symbolic.lazy.bounded = false
+symbolic.lazy.bounded = true
 symbolic.lazy.subtypes = true
-symbolic.lazy.refine = false
-symbolic.lazy.bounddb = ${sourcepath}/symbolicheap/bounded/bounddb/AvlTree-05.txt
-symbolic.lazy.limit = 5
-symbolic.lazy.useauxsolver = false
+symbolic.lazy.refine = true
+symbolic.lazy.bounddb = ${sourcepath}/symbolicheap/bounded/bounddb/AvlTree-13.txt
+symbolic.lazy.limit = 13
+symbolic.lazy.useauxsolver = true
 symbolic.lazy.useauxsolver.debug = false
-symbolic.lazy.pvarsdb = ${sourcepath}/symbolicheap/bounded/bounddb/AvlTree-05.pvars
+symbolic.lazy.pvarsdb = ${sourcepath}/symbolicheap/bounded/bounddb/AvlTree-13.pvars
 
 #----------------------------------------------------------------------
 listener = gov.nasa.jpf.symbc.heap.bounded.HeapSymbolicListenerBounded3

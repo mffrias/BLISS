@@ -71,6 +71,9 @@ implements PublisherExtension {
 	private DynamicElementInfo repOKRoot = null;
 
 	private int repOKSize = 0;
+	
+	private int depthToStop = 34;
+	private int currentDepth = 0;
 
 	@Override
 	public void searchFinished(Search search) {
@@ -161,7 +164,18 @@ implements PublisherExtension {
 //					structureCount++;
 				} else if (methodNameWithoutParameterTypes.equals("setCurrentStateToInputState")) {
 					setCurrentStateToInputState(vm);
-				} 
+				} else if (methodNameWithoutParameterTypes.equals("termino")){
+					System.out.println("Fin del camino");
+					currentThread.getVM().getSystemState().setIgnored(true);
+				} else {
+					if (currentDepth > depthToStop) {
+						currentDepth = 0;
+						System.out.println("Camino cortado");
+						currentThread.getVM().getSystemState().setIgnored(true);
+					} else {
+						currentDepth++;
+					}
+				}
 			}
 
 

@@ -2,10 +2,11 @@ target=demo.NumericExample
 classpath=${jpf-symbc}/build/examples
 sourcepath=${jpf-symbc}/src/examples
 symbolic.method = demo.NumericExample.test(sym#sym)
+symbolic.dp=z3bitvector
 
 #symbolic.dp=z3
-listener = .symbc.SymbolicListener
+#listener = .symbc.SymbolicListener
 
-search.multiple_errors=true
+#search.multiple_errors=true
 
 #symbolic.debug=true

@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import gov.nasa.jpf.symbc.Debug;
 import gov.nasa.jpf.symbc.DebugBounded;
 
 public class BinomialHeap {
@@ -1000,41 +999,22 @@ public class BinomialHeap {
 	}
 
 
-		private static int LIMIT = 5;
-		public static void main(String[] args) {
+	private static int LIMIT = 13;
+	public static void main(String[] args) {
 
-			BinomialHeap BH0 = new BinomialHeap();
-			BH0 = (BinomialHeap) DebugBounded.makeSymbolicRef("BH0", BH0);
-			BinomialHeap backupBH0 = BH0;
-			if (BH0 != null && BH0.repOK_Concrete()) {
+		BinomialHeap BH0 = new BinomialHeap();
+		BH0 = (BinomialHeap) DebugBounded.makeSymbolicRefBounded("BH0", BH0);
+//		BH0 = (BinomialHeap) DebugBounded.makeSymbolicRef("BH0", BH0);
+
+		BinomialHeap backupBH0 = BH0;
+		if (BH0 != null && BH0.repOK_Concrete()) {
+			BinomialHeapNode bh = BH0.extractMin();
+			if (!BH0.repOK_Concrete())
 				BH0.dumpRootStructure();
-			}
-
 		}
 
-
-//	private static int LIMIT = 10;
-//
-//	public static void main(String[] args) {
-//		BinomialHeap BH0 = new BinomialHeap();
-//		//				BH0 = (BinomialHeap) Debug.makeSymbolicRef("BH0", BH0);
-//		BH0 = (BinomialHeap) Debug.makeSymbolicRefBounded("BH0", BH0);
-//
-//		if (BH0 != null ) {
-////			try {
-//				//			BinomialHeapNode N0 = BH0.extractMin();
-//			BH0.dumpStructure(BH0.Nodes);
-//				BH0.bfsTraverse(BH0.Nodes);
-//				BH0.countStructure(BH0.Nodes);
-////			} catch (Exception e) {}
-//		}
-//
-//	}
-
-	private static void setCurrentStateToInputState() {
-		// TODO Auto-generated method stub
-
 	}
+
 
 
 
@@ -1044,7 +1024,11 @@ public class BinomialHeap {
 	}
 
 
+	
 }
+
+
+
 
 
 

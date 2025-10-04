@@ -1,16 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <libraryInfos>
-    <libraryInfo home="/Users/mfrias/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.macosx.aarch64_21.0.4.v20240802-1551" version="21.0.4">
-        <bootpath>
-            <entry path="null"/>
-        </bootpath>
-        <extensionDirs>
-            <entry path="null"/>
-        </extensionDirs>
-        <endorsedDirs>
-            <entry path="null"/>
-        </endorsedDirs>
-    </libraryInfo>
     <libraryInfo home="/Users/mfrias/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.macosx.aarch64_21.0.4.v20240802-1551/jre" version="21.0.4"/>
     <libraryInfo home="/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home" version="1.8.0_292">
         <bootpath>
@@ -35,6 +24,7 @@
             <entry path="/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/jre/lib/endorsed"/>
         </endorsedDirs>
     </libraryInfo>
+    <libraryInfo home="/Users/drfrias/.sdkman/candidates/java/11.0.26-amzn" version="11.0.26"/>
     <libraryInfo home="/Library/Java/JavaVirtualMachines/jdk1.7.0_80.jdk/Contents/Home" version="1.7.0_80">
         <bootpath>
             <entry path="/Library/Java/JavaVirtualMachines/jdk1.7.0_80.jdk/Contents/Home/jre/lib/resources.jar"/>
@@ -60,6 +50,19 @@
     </libraryInfo>
     <libraryInfo home="/Library/Java/JavaVirtualMachines/jdk-19.jdk/Contents/Home" version="19.0.2"/>
     <libraryInfo home="/Library/Java/JavaVirtualMachines/openlogic-openjdk-11.jdk/Contents/Home" version="11.0.24"/>
+    <libraryInfo home="/Library/Java/JavaVirtualMachines/jdk-11.jdk/Contents/Home" version="11.0.24"/>
+    <libraryInfo home="/Users/mfrias/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.macosx.aarch64_21.0.4.v20240802-1551" version="21.0.4">
+        <bootpath>
+            <entry path="null"/>
+        </bootpath>
+        <extensionDirs>
+            <entry path="null"/>
+        </extensionDirs>
+        <endorsedDirs>
+            <entry path="null"/>
+        </endorsedDirs>
+    </libraryInfo>
+    <libraryInfo home="/Users/drfrias/Library/Java/JavaVirtualMachines/openjdk-24.0.2+12-54/Contents/Home" version="24.0.2"/>
     <libraryInfo home="/Library/Java/JavaVirtualMachines/jdk1.8.0_351.jdk/Contents/Home" version="1.8.0_351">
         <bootpath>
             <entry path="/Library/Java/JavaVirtualMachines/jdk1.8.0_351.jdk/Contents/Home/jre/lib/resources.jar"/>
@@ -83,4 +86,27 @@
         </endorsedDirs>
     </libraryInfo>
     <libraryInfo home="/Users/mfrias/Library/Java/JavaVirtualMachines/corretto-11.0.24/Contents/Home" version="11.0.24"/>
+    <libraryInfo home="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home" version="1.7.0_80">
+        <bootpath>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/resources.jar"/>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/rt.jar"/>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/sunrsasign.jar"/>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jsse.jar"/>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jce.jar"/>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/charsets.jar"/>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jfr.jar"/>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/classes"/>
+        </bootpath>
+        <extensionDirs>
+            <entry path="/Users/drfrias/Library/Java/Extensions"/>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/ext"/>
+            <entry path="/Library/Java/Extensions"/>
+            <entry path="/Network/Library/Java/Extensions"/>
+            <entry path="/System/Library/Java/Extensions"/>
+            <entry path="/usr/lib/java"/>
+        </extensionDirs>
+        <endorsedDirs>
+            <entry path="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/endorsed"/>
+        </endorsedDirs>
+    </libraryInfo>
 </libraryInfos>
