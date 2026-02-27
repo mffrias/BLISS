@@ -195,6 +195,9 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 		numSymRefs = prevSymRefs.length;
 
 		int daIndex = 0; //index into JPF's dynamic area
+
+                System.out.println("currentchoice = " + currentChoice + ", numSymRefs = " + numSymRefs + ", limit = " + limit);
+                
 		if (currentChoice < numSymRefs) { // lazy initialization using a previously lazily initialized object
 			HeapNode candidateNode = prevSymRefs[currentChoice];
 			// here we should update pcHeap with the constraint attr == candidateNode.sym_v
@@ -207,14 +210,14 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 			daIndex = MJIEnv.NULL;//-1;
 			symInputHeap.setPointsToIndexThroughField(objRef, fi.getName(), MJIEnv.NULL);
 		}
-		else if (currentChoice == (numSymRefs + 1) && !abstractClass) {  
+		else if (currentChoice == (numSymRefs + 1) && !abstractClass && numSymRefs < limit) {  
 			// creates a new object with all fields symbolic and adds the object to SymbolicHeap
 
 			daIndex = Helper.addNewHeapNode(typeClassInfo, ti, attr, pcHeap,
 					symInputHeap, numSymRefs, prevSymRefs, ei.isShared());
 			symInputHeap.setPointsToIndexThroughField(objRef, fi.getName(), daIndex);
 		} else {
-			System.err.println("subtyping not handled");
+			System.err.println("subtyping not handled in GETFIELD");
 		}
 
 
@@ -232,7 +235,7 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 		String className = symInputHeap.getNodeByIndex(rootIndex).getType().getName();
 		Class<?> c = Helper.loadClassUnderAnalysis(className);
 
-		boolean ok = hybridRepOKExecute(ti, symInputHeap, rootIndex, c);
+		boolean ok = true;//hybridRepOKExecute(ti, symInputHeap, rootIndex, c);
 
 		HeapSymbolicListenerBounded3.numOfRepOKCalls++;
 		if (!ok){

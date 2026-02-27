@@ -999,7 +999,7 @@ public class BinomialHeap {
 	}
 
 
-	private static int LIMIT = 13;
+	private static int LIMIT = 15;
 	public static void main(String[] args) {
 
 		BinomialHeap BH0 = new BinomialHeap();
@@ -1008,8 +1008,6 @@ public class BinomialHeap {
 
 		BinomialHeap backupBH0 = BH0;
 		if (BH0 != null && BH0.repOK_Concrete()) {
-			BinomialHeapNode bh = BH0.extractMin();
-			if (!BH0.repOK_Concrete())
 				BH0.dumpRootStructure();
 		}
 

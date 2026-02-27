@@ -41,7 +41,7 @@ public class LinkedList {
 		visited.add(header);
 		LinkedListNode current = header;
 
-		while (true) {
+		while (visited.size() <= LIMIT) {
 			if (current.next == LinkedListNode.SYMBOLICLINKEDLISTNODE)
 				return true;
 			LinkedListNode next = current.next;
@@ -76,18 +76,21 @@ public class LinkedList {
 		visited.add(header);
 		LinkedListNode current = header;
 
-		while (true) {
+		while ( true ) {
 			LinkedListNode next = current.next;
-			if (next == null)
+			if (next == null) {
 				return false;
-			if (next.prev != current)
+			}
+			if (next.prev != current) {
 				return false;
+			}
 			current = next;
 			if (!visited.add(next))
 				break;
 		}
-		if (current != header)
+		if (current != header) {
 			return false;
+		}
 
 		if (visited.size() - 1 != size)
 			return false;
@@ -716,23 +719,23 @@ public class LinkedList {
 	public void dumpRootStructure(LinkedList l) {
 	}
 
-	public static int LIMIT = 15;
-	public static void main(String[] args) {
-
-		LinkedList L = new LinkedList();
-		//		 L = (LinkedList) DebugBounded.makeSymbolicRef("L", L);
-		L = (LinkedList) DebugBounded.makeSymbolicRefBounded("L", L);
-
-		try {
-			if (L != null) {
-				L.repOK_Concrete();
-				L.dumpRootStructure(L);
-			}
-		} catch (Exception e) {
-		}
-	}
+	public static int LIMIT = 7;
+       public static void main(String[] args) {
+          LinkedList L = new LinkedList();
+          // L = (LinkedListremoveBLISSsize7take5) DebugBounded.makeSymbolicRef("L", L);
+          L = (LinkedList) DebugBounded.makeSymbolicRefBounded("L", L);
+       
+          try {
+             if (L != null){
+                L.remove(7 - 1);
+                L.countStructure(L.header);
+             }
+          } catch (Exception e) {
+          // Ignored!
+          }
+       }
 }
 
 
 // ~~~~~~~~~~~~~~~~~ End of class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+   

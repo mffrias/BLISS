@@ -532,7 +532,7 @@ public class AvlTree {
 		public void dumpStructure(AvlTree root) { }
 
 
-        private static final int LIMIT = 13;
+        private static final int LIMIT = 20;
         
         public static void main(String[] args) {
 
@@ -540,10 +540,13 @@ public class AvlTree {
 //                X = (AvlTree) DebugBounded.makeSymbolicRef("X", X);
                 X = (AvlTree) DebugBounded.makeSymbolicRefBounded("X", X);
 
-                if (X != null && X.repOK_Concrete(X)) {
-        			X.dumpStructure(X);
-        		}
-                X.termino();
+                try {
+                     if (X != null && X.repOK_Concrete(X)) {
+        		   X.bfsTraverse(X);
+                           X.dumpStructure(X);
+        	     }
+                } catch (Exception e) {
+                }
         }
 
 

@@ -241,6 +241,7 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 		assert symInputHeap.count() > 0;
 
 		HeapNode hnb = symInputHeap.getNodeByIndex(objRef);
+//		System.out.println("Current ref is " + objRef);
 		ClassInfo sourceType = hnb.getType();
 //		System.out.println("passed");
 		BoundsMap bounds = HeapChoiceGeneratorBounded.getBounds();
@@ -253,22 +254,36 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 
 		int daIndex = 0; //index into JPF's dynamic area
 		if (currentChoice < numSymRefs){
+			//System.out.println("Debug-mfrias4: GETFIELDBounded. currentChoice = " + currentChoice + "  <  numSymRefs = " + numSymRefs);
 			Integer currentIndexForPreviosulyIntersectingNode = thisHeapCG.getIntersectingIndices()[currentChoice];
+                        //System.out.println("Debug-mfrias4: GETFIELDBounded currentIndexForPreviosulyIntersectingNode = " + currentIndexForPreviosulyIntersectingNode);
 			BitSet mapSourceNodeThroughFieldBound = HeapChoiceGeneratorBounded.getBounds().getTargets(sourceType.getName(), fi.getName(), symInputHeap.getBoundByIndex(hnb.getIndex()));
+                        //System.out.println("Debug-mfrias4: GETFIELDBounded. mapSourceNodeThroughFieldBound = " + mapSourceNodeThroughFieldBound);
+                        //System.out.println("Debug-mfria4: GETFIELDBounded. The current field is " + fi.getName());
+                        
 			// bounded lazy initialization using a previously bounded lazily initialized object
+
+                        //System.out.println("Debug-mfrias4: GETFIELDBounded. getBoundByIndex for currIndex " + currentIndexForPreviosulyIntersectingNode + " is " + symInputHeap.getBoundByIndex(currentIndexForPreviosulyIntersectingNode));
+
+                        //System.out.println("Debug-mfrias4: GETFIELDBounded. Should intersect with " + mapSourceNodeThroughFieldBound);
+ 
 			if (symInputHeap.getBoundByIndex(currentIndexForPreviosulyIntersectingNode).intersects(mapSourceNodeThroughFieldBound)){
 				HeapNode candidateNode = symInputHeap.getNodeByIndex(currentIndexForPreviosulyIntersectingNode);
 				// here we should update pcHeap with the constraint attr == candidateNode.sym_v
 				pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, candidateNode.getSymbolic());
 				daIndex = candidateNode.getIndex();
 				symInputHeap.setPointsToIndexThroughField(objRef, fi.getName(), daIndex);
+//				System.out.println("Points from " + objRef + " to " + daIndex + " via " + fi.getName() + " with symbInputHeap " + symInputHeap.toString());
+//				System.out.println("symbInputHeap getBoundByIndex for objRef = " + objRef + " is " + symInputHeap.getBoundByIndex(objRef).toString());
 			} else {
+//				System.out.println("currentChoice = " + currentChoice + "  <  numSymRefs = " + numSymRefs + " but no");
 				ti.getVM().getSystemState().setIgnored(true);
 				return this;
 			}
 		}
 		else {
 			if (currentChoice == numSymRefs){ //null object && null is in the bound of obj.fi
+//				System.out.println("Turn for null");
 				BitSet targetBound = HeapChoiceGeneratorBounded.getBounds().getTargets(sourceType.getName(), fi.getName(), symInputHeap.getBoundByIndex(hnb.getIndex()));
 				if (targetBound.get(0)){
 					pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, MJIEnv.NULL);
@@ -281,11 +296,14 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 
 			} else {
 				if (currentChoice == (numSymRefs + 1) && !abstractClass) { 
+//					System.out.println("currentChoice == (numSymRefs + 1)");
 
 					BitSet targetBitSetBound = BoundedHelper.getTargetBoundSet(symInputHeap, sourceType, hnb, fi.getName(), bounds);
+					//System.out.println("The targetBitSetBound for the new node to be added through field " + fi.getName() + " is " + targetBitSetBound.toString());
 
 					if (BoundedHelper.keySetOfType(symInputHeap.nodesByIndex, fi.getTypeClassInfo()).size() == limit || ((targetBitSetBound.cardinality()==1) && targetBitSetBound.get(0))) { //null is always in the set, but it is not enough.
 						ti.getVM().getSystemState().setIgnored(true);
+//						System.out.println("There are no new nodes to add to extend " + objRef + " with field " + fi.getName());
 						return this;
 					}
 
@@ -297,6 +315,7 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 					daIndex = BoundedHelper.addNewHeapNode(typeClassInfo, ti, attr, ti.getVM().getKernelState(), pcHeap,
 							symInputHeap, targetBitSetBound);
 
+//					System.out.println("About to extend " + objRef + " to " + daIndex + " via " + fi.getName());
 					symInputHeap.setPointsToIndexThroughField(objRef, fi.getName(), daIndex);
 
 				} else {
@@ -329,27 +348,31 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 
 		
 		boolean ok = hybridRepOKExecute(ti, symInputHeap, rootIndex, c);
+//		System.out.println("Executed hybrid repok with outcome " + ok);
 		HeapSymbolicListenerBounded3.numOfRepOKCalls++;
 
 
 		if (!ok){
-//						System.out.println(objRef + "- ");
+                        //System.out.println("killed by hybridrepok");
+//			System.out.println(objRef + "- ");
 			HeapSymbolicListenerBounded3.numOfRepOKFails++;
 			ti.getVM().getSystemState().setIgnored(true);
 			return this;
 		} else {	
-//						System.out.println(objRef + "+ ");
+//			System.out.println(objRef + "+ ");
 			BoundedHelper.targetCount++;
 			String[] refine = conf.getStringArray("symbolic.lazy.refine");
 			if (refine != null && refine[0].equalsIgnoreCase("true")){
 				if (!BoundedHelper.refineHeap(symInputHeap, ti)){
+                                        //System.out.println("killed by refinement");
 					ti.getVM().getSystemState().setIgnored(true);
 					return this;
 				}
 				String[] useBLISS = conf.getStringArray("symbolic.lazy.useauxsolver");
 				if (useBLISS != null && useBLISS[0].equalsIgnoreCase("true")){
 					HeapSymbolicListenerBounded3.numOfSolverCalls++;
-					if (!BoundedHelper.processHeapWithSolver(symInputHeap, ti)){						
+					if (!BoundedHelper.processHeapWithSolver(symInputHeap, ti)){
+                                                //System.out.println("killed by sat solver");						
 						ti.getVM().getSystemState().setIgnored(true);
 						return this;
 					}
@@ -364,13 +387,7 @@ public class GETFIELDBounded extends gov.nasa.jpf.symbc.bytecode.GETFIELD {
 	}
 
 
-	private static void imprimirArreglo(Integer[] A){
-		System.out.print("[");
-		for (int i=0; i<A.length; i++){
-			System.out.print(A[i]+",");
-		}
-		System.out.println("]");
-	}
+
 
 
 }

@@ -735,22 +735,25 @@ public class BoundedHelper {
 					sb.append('.');
 
 					boolean doBreak = false;
-					for (String fieldName : BoundedHelper.getBackbone()){
+                                        for (String fieldName : BoundedHelper.getBackbone()){
+						HeapNode hn = heap.getNodeByIndex(nodeIndex);
+						ClassInfo ci = hn.getType();
+						if (ci.getDeclaredInstanceField(fieldName) != null) {
+							Integer index = heap.pointsToThroughField(nodeIndex, fieldName);
 
-						Integer index = heap.pointsToThroughField(nodeIndex, fieldName);
+							//System.out.println("Before if in BoundedHelper. Node is " + nodeIndex + " and field is " + fieldName);
 
-						List<Integer> laux = edgeFacts(heap, fieldName, nodeIndex, index);
-						if (laux.isEmpty()){
-							doBreak = true;
-						} else {
-							if (laux.contains(-2)){
-								return false;
-							} else
-								facts.addAll(laux);
-						}	
+							List<Integer> laux = edgeFacts(heap, fieldName, nodeIndex, index);
+							if (!laux.isEmpty()) {
+								if (laux.contains(-2)) {
+									return false;
+								} else
+									facts.addAll(laux);
+							}
 
-						if ((index == null) || (index == MJIEnv.NULL) || visited.add(index)) {
-							worklist.add(index);
+							if ((index == null) || (index == MJIEnv.NULL) || visited.add(index)) {
+								worklist.add(index);
+							}
 						}
 					}
 				}

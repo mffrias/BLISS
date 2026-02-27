@@ -438,9 +438,8 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 				try {
 					mi = md.getInvokedMethod();
 				} catch (Exception e) {
-					System.out.println("Thrownnn");
+                                        System.out.println("Error message: " + e.getMessage());
 				}
-				System.out.println("After Thrownnn");
 				ClassInfo ci = mi.getClassInfo();
 				
 				String className = ci.getName();

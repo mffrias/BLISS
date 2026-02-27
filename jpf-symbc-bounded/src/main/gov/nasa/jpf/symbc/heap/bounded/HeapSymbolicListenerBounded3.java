@@ -72,7 +72,7 @@ implements PublisherExtension {
 
 	private int repOKSize = 0;
 	
-	private int depthToStop = 34;
+	private int depthToStop = Integer.MAX_VALUE;
 	private int currentDepth = 0;
 
 	@Override
@@ -155,6 +155,7 @@ implements PublisherExtension {
 			String methodNameWithoutParameterTypes = methodName.substring(0, methodName.indexOf('('));
 			if (methodNameWithoutParameterTypes != null) {
 				if (methodNameWithoutParameterTypes.equals("dumpRootStructure")) {
+					System.out.println("About to invoke dumpRootStructure");
 					System.out.println(dumpRootStructure(vm));
 					dumpStructureCalls++;
 				} else if (methodNameWithoutParameterTypes.equals("dumpStructure"))	 {
@@ -167,15 +168,15 @@ implements PublisherExtension {
 				} else if (methodNameWithoutParameterTypes.equals("termino")){
 					System.out.println("Fin del camino");
 					currentThread.getVM().getSystemState().setIgnored(true);
-				} else {
-					if (currentDepth > depthToStop) {
-						currentDepth = 0;
-						System.out.println("Camino cortado");
-						currentThread.getVM().getSystemState().setIgnored(true);
-					} else {
-						currentDepth++;
-					}
-				}
+				} //else {
+				//	if (currentDepth > depthToStop) {
+				//		currentDepth = 0;
+				//		System.out.println("Camino cortado");
+				//		currentThread.getVM().getSystemState().setIgnored(true);
+				//	} else {
+				//		currentDepth++;
+				//	}
+				//}
 			}
 
 
