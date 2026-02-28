@@ -196,7 +196,7 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 
 		int daIndex = 0; //index into JPF's dynamic area
 
-                System.out.println("currentchoice = " + currentChoice + ", numSymRefs = " + numSymRefs + ", limit = " + limit);
+                //System.out.println("currentchoice = " + currentChoice + ", numSymRefs = " + numSymRefs + ", limit = " + limit);
                 
 		if (currentChoice < numSymRefs) { // lazy initialization using a previously lazily initialized object
 			HeapNode candidateNode = prevSymRefs[currentChoice];
@@ -217,7 +217,8 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 					symInputHeap, numSymRefs, prevSymRefs, ei.isShared());
 			symInputHeap.setPointsToIndexThroughField(objRef, fi.getName(), daIndex);
 		} else {
-			System.err.println("subtyping not handled in GETFIELD");
+                        ti.getVM().getSystemState().setIgnored(true);
+                        return this;
 		}
 
 
