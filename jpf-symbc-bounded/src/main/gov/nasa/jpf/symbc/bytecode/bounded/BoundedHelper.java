@@ -1037,7 +1037,7 @@ public class BoundedHelper {
 		ClassInfo superClass = typeClassInfo;
 		while(superClass != null) {
 			FieldInfo[] staticFields = superClass.getDeclaredStaticFields();
-			Helper.initializeStaticFields(staticFields, superClass, ti);
+			BoundedHelper.initializeStaticFields(staticFields, superClass, ti);
 			superClass = superClass.getSuperClass();
 		}
 
@@ -1150,7 +1150,7 @@ public class BoundedHelper {
 		ClassInfo superClass = ci;
 		while (superClass != null) {
 			FieldInfo[] staticFields = superClass.getDeclaredStaticFields();
-			Helper.initializeStaticFields(staticFields, superClass, ti);
+			BoundedHelper.initializeStaticFields(staticFields, superClass, ti);
 			superClass = superClass.getSuperClass();
 		}
 
